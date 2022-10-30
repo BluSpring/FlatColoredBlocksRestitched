@@ -2,11 +2,11 @@ package mod.flatcoloredblocks.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/*
 import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.config.ModConfig;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.fml.client.config.IConfigElement;
+import net.minecraftforge.fml.client.config.IConfigElement;*/
 
 /*x
 public class ConfigGui extends GuiConfig

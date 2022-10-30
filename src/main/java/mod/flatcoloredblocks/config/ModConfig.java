@@ -2,8 +2,6 @@ package mod.flatcoloredblocks.config;
 
 import java.io.File;
 
-import net.minecraftforge.common.MinecraftForge;
-
 // TODO: Loading, Managing and Saving Values
 public class ModConfig
 {
@@ -286,8 +284,6 @@ public class ModConfig
 			final File path )
 	{
 		myPath = path;
-
-		MinecraftForge.EVENT_BUS.register( this );
 
 		setDefaults();
 	}

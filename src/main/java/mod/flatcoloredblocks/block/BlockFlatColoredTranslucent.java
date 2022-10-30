@@ -1,13 +1,10 @@
 package mod.flatcoloredblocks.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReader;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class BlockFlatColoredTranslucent extends BlockFlatColored
 {
@@ -25,17 +22,11 @@ public class BlockFlatColoredTranslucent extends BlockFlatColored
 	}
 
 	@Override
-	public BlockRenderLayer getRenderLayer()
-	{
-		return BlockRenderLayer.TRANSLUCENT;
-	}
-
-	@Override
-	@OnlyIn( Dist.CLIENT )
-	public boolean isSideInvisible(
-			IBlockState state,
-			IBlockState adjacentBlockState,
-			EnumFacing side )
+	@Environment( EnvType.CLIENT )
+	public boolean skipRendering(
+			BlockState state,
+			BlockState adjacentBlockState,
+			Direction side )
 	{
 		final Block block = adjacentBlockState.getBlock();
 
@@ -44,29 +35,24 @@ public class BlockFlatColoredTranslucent extends BlockFlatColored
 			return true;
 		}
 
-		return super.isSideInvisible( state, adjacentBlockState, side );
+		return super.skipRendering( state, adjacentBlockState, side );
 	}
 
-	@Override
-	public boolean isFullCube(
-			final IBlockState state )
+	/*@Override
+	public boolean func_149686_d(
+			final BlockState state )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean isNormalCube(
-			IBlockState state )
+	public boolean func_149721_r(
+			BlockState state )
 	{
 		return false;
-	}
+	}*/
 
-	@Override
-	public float[] getBeaconColorMultiplier(
-			IBlockState state,
-			IWorldReader world,
-			BlockPos pos,
-			BlockPos beaconPos )
+	public float[] getBeaconColorMultiplier(BlockState state)
 	{
 		int o = ConversionHSV2RGB.toRGB( hsvFromState( state ) );
 		return new float[] { byteToFloat( ( o >> 16 ) & 0xff ), byteToFloat( ( o >> 8 ) & 0xff ), byteToFloat( ( o ) & 0xff ) };

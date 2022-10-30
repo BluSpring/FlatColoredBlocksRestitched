@@ -1,99 +1,77 @@
 package mod.flatcoloredblocks.client;
 
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-
 import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.ModUtil;
 import mod.flatcoloredblocks.block.BlockFlatColored;
+import mod.flatcoloredblocks.block.BlockFlatColoredTranslucent;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
-import mod.flatcoloredblocks.gui.ModGuiRouter;
+import mod.flatcoloredblocks.craftingitem.GuiColoredBlockCrafter;
+import mod.flatcoloredblocks.mixin.MinecraftAccessor;
 import mod.flatcoloredblocks.resource.ResourceGenerator;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.client.renderer.color.IItemColor;
-import net.minecraft.client.renderer.color.ItemColors;
-import net.minecraft.item.ItemStack;
-import net.minecraft.resources.IReloadableResourceManager;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IWorldReaderBase;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.ExtensionPoint;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.minecraftforge.resource.IResourceType;
-import net.minecraftforge.resource.ISelectiveResourceReloadListener;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.client.color.item.ItemColors;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ReloadableResourceManager;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 
-public class ClientSide
+public class ClientSide implements ClientModInitializer
 {
 
 	public static final ClientSide instance = new ClientSide();
 
 	public ResourceGenerator resourceGenerator = new ResourceGenerator();
 
-	private ClientSide()
-	{
-	}
-
 	public void preinit()
 	{
 		resourceGenerator.init();
-		MinecraftForge.EVENT_BUS.register( resourceGenerator );
 
-		IResourceManager manager = Minecraft.getInstance().getResourceManager();
-		if ( manager instanceof IReloadableResourceManager )
+		ResourceManager manager = Minecraft.getInstance().getResourceManager();
+		if ( manager instanceof ReloadableResourceManager)
 		{
-			( (IReloadableResourceManager) manager ).addReloadListener( new ISelectiveResourceReloadListener() {
-
-				@Override
-				public void onResourceManagerReload(
-						IResourceManager resourceManager,
-						Predicate<IResourceType> resourcePredicate )
+			( (ReloadableResourceManager) manager ).registerReloadListener((ResourceManagerReloadListener) resourceManager -> {
+				if ( FlatColoredBlocks.instance.itemColoredBlockCrafting != null )
 				{
-					if ( FlatColoredBlocks.instance.itemColoredBlockCrafting != null )
-					{
-						FlatColoredBlocks.instance.itemColoredBlockCrafting.scrollIndex = -1;
-					}
+					FlatColoredBlocks.instance.itemColoredBlockCrafting.scrollIndex = -1;
 				}
-
-			} );
+			});
 		}
 	}
 
-	public void createResources()
+	@Override
+	public void onInitializeClient()
 	{
-		resourceGenerator.populateResources();
-	}
+		preinit();
+		//ModLoadingContext.get().registerExtensionPoint( ExtensionPoint.GUIFACTORY, new ModGuiRouter() );
 
-	public void init(
-			FMLLoadCompleteEvent ev )
-	{
-		ModLoadingContext.get().registerExtensionPoint( ExtensionPoint.GUIFACTORY, new ModGuiRouter() );
-
-		clientItems();
-		clientBlocks();
+		ClientLifecycleEvents.CLIENT_STARTED.register((client) -> {
+			clientItems();
+			clientBlocks();
+		});
 	}
 
 	public void clientItems()
 	{
 		Block[] flatColoredBlocks = BlockFlatColored.getAllBlocks().toArray( new Block[BlockFlatColored.getAllBlocks().size()] );
-		ItemColors colors = Minecraft.getInstance().getItemColors();
+		ItemColors colors = ((MinecraftAccessor) Minecraft.getInstance()).getItemColors();
 
-		colors.register( new IItemColor() {
+		colors.register( new ItemColor() {
 
 			@Override
-			@Nonnull
 			public int getColor(
 					final ItemStack stack,
 					final int tintIndex )
 			{
-				final Block blk = Block.getBlockFromItem( stack.getItem() );
+				final Block blk = Block.byItem( stack.getItem() );
 				return ( (BlockFlatColored) blk ).colorFromState( ModUtil.getFlatColoredBlockState( ( (BlockFlatColored) blk ), stack ) );
 			}
 		}, flatColoredBlocks );
@@ -104,19 +82,13 @@ public class ClientSide
 		Block[] flatColoredBlocks = BlockFlatColored.getAllBlocks().toArray( new Block[BlockFlatColored.getAllBlocks().size()] );
 		BlockColors colors = Minecraft.getInstance().getBlockColors();
 
-		colors.register( new IBlockColor() {
+		colors.register((state, p_186720_2_, pos, tintIndex) -> ( (BlockFlatColored) state.getBlock() ).colorFromState( state ), flatColoredBlocks );
 
-			@Override
-			public int getColor(
-					final IBlockState state,
-					final IWorldReaderBase p_186720_2_,
-					final BlockPos pos,
-					final int tintIndex )
-			{
-				return ( (BlockFlatColored) state.getBlock() ).colorFromState( state );
+		for (Block block : flatColoredBlocks) {
+			if (block instanceof BlockFlatColoredTranslucent) {
+				BlockRenderLayerMap.INSTANCE.putBlock(block, RenderType.translucent());
 			}
-
-		}, flatColoredBlocks );
+		}
 	}
 
 	public ResourceLocation getTextureName(

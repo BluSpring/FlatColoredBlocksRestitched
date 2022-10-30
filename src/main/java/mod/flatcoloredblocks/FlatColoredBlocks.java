@@ -1,34 +1,34 @@
 package mod.flatcoloredblocks;
 
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-
 import mod.flatcoloredblocks.block.BlockFlatColored;
 import mod.flatcoloredblocks.block.BlockHSVConfiguration;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
 import mod.flatcoloredblocks.block.ItemBlockFlatColored;
-import mod.flatcoloredblocks.client.ClientSide;
 import mod.flatcoloredblocks.config.ModConfig;
+import mod.flatcoloredblocks.craftingitem.ContainerColoredBlockCrafter;
+import mod.flatcoloredblocks.craftingitem.GuiColoredBlockCrafter;
 import mod.flatcoloredblocks.craftingitem.ItemColoredBlockCrafter;
 import mod.flatcoloredblocks.network.NetworkRouter;
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.devtech.arrp.api.RRPCallback;
+import net.devtech.arrp.api.RuntimeResourcePack;
+import net.devtech.arrp.json.tags.JTag;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 
-@Mod( FlatColoredBlocks.MODID )
-public class FlatColoredBlocks
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
+
+public class FlatColoredBlocks implements ModInitializer
 {
 	// create creative tab...
 	public static FlatColoredBlocks instance;
@@ -45,9 +45,17 @@ public class FlatColoredBlocks
 	public BlockHSVConfiguration transparent;
 	public BlockHSVConfiguration glowing;
 
+	public MenuType<ContainerColoredBlockCrafter> containerType;
+
+	public final RuntimeResourcePack resourcePack = RuntimeResourcePack.create(new ResourceLocation(MODID, "internal"));
+
 	public FlatColoredBlocks()
 	{
 		instance = this;
+
+		containerType = ScreenHandlerRegistry.registerSimple(new ResourceLocation(MODID, "colored_block_crafter"), (syncId, container) ->
+				new ContainerColoredBlockCrafter(syncId, container.player, container.player.getLevel(), 0, 0, 0)
+		);
 
 		// configure creative tab.
 		creativeTab = new CreativeTab();
@@ -55,22 +63,23 @@ public class FlatColoredBlocks
 		// configure networking and gui.
 		NetworkRouter.instance = new NetworkRouter();
 
-		config = new ModConfig( new File( FMLPaths.CONFIGDIR.get().toFile(), MODID ) );
+		config = new ModConfig( new File( FabricLoader.getInstance().getConfigDir().toFile(), MODID ) );
 		initHSVFromConfiguration( config );
-
-		DistExecutor.runWhenOn( Dist.CLIENT, () -> () ->
-		{
-			ClientSide.instance.preinit();
-			FMLJavaModLoadingContext.get().getModEventBus().addListener( ClientSide.instance::init );
-		} );
-
-		FMLJavaModLoadingContext.get().getModEventBus().addListener( this::init );
 	}
 
-	private void init(
-			final FMLCommonSetupEvent event )
-	{
-		MinecraftForge.EVENT_BUS.register( this );
+	@Override
+	public void onInitialize() {
+		RegistryEvents.onBlocksRegistry(Registry.BLOCK);
+		RegistryEvents.onItemsRegistry(Registry.ITEM);
+
+		registerDyeTags();
+		RRPCallback.BEFORE_VANILLA.register(a -> a.add(resourcePack));
+	}
+
+	private void registerDyeTags() {
+		for (DyeColor dyeColor : DyeColor.values()) {
+			resourcePack.addTag(new ResourceLocation("c", dyeColor.getName() + "_dyes"), JTag.tag().add(new ResourceLocation("minecraft", dyeColor.getName() + "_dye")));
+		}
 	}
 
 	public int getFullNumberOfShades()
@@ -95,49 +104,39 @@ public class FlatColoredBlocks
 		glowing = new BlockHSVConfiguration( EnumFlatBlockType.GLOWING, config );
 	}
 
-	@Mod.EventBusSubscriber( bus = Mod.EventBusSubscriber.Bus.MOD )
 	public static class RegistryEvents
 	{
-		@SubscribeEvent
-		public static void onBlocksRegistry(
-				RegistryEvent.Register<Block> ev )
+		public static void onBlocksRegistry(Registry<Block> registry)
 		{
-			Log.debug( "registering blocks : " + ev.getName() );
-			FlatColoredBlocks.instance.blocks( ev.getRegistry() );
+			Log.debug( "registering blocks : " + registry.key().registry().toString() );
+			FlatColoredBlocks.instance.blocks(registry);
 		}
 
-		@SubscribeEvent
-		public static void onItemsRegistry(
-				RegistryEvent.Register<Item> ev )
+		public static void onItemsRegistry(Registry<Item> registry)
 		{
-			Log.debug( "registering items : " + ev.getName() );
-			FlatColoredBlocks.instance.items( ev.getRegistry() );
+			Log.debug( "registering items : " + registry.key().registry().toString() );
+			FlatColoredBlocks.instance.items(registry);
 		}
 
-	}
-
-	@SubscribeEvent
-	public void serverStarted(
-			FMLServerStartedEvent event )
-	{
-		Log.info( "Server start" );
 	}
 
 	public void items(
-			IForgeRegistry<Item> registry )
+			Registry<Item> registry )
 	{
-		registry.register( FlatColoredBlocks.instance.itemColoredBlockCrafting = new ItemColoredBlockCrafter() );
+		ItemColoredBlockCrafter icbc = FlatColoredBlocks.instance.itemColoredBlockCrafting = new ItemColoredBlockCrafter();
 
-		for ( ItemBlock ib : itemBlocks )
+		//Registry.register(registry, icbc.getRegistryName(), icbc);
+
+		for ( BlockItem ib : itemBlocks )
 		{
-			registry.register( ib );
+			Registry.register(registry, ((RegistryItem) ib).getRegistryName(), ib);
 		}
 	}
 
-	private static List<ItemBlock> itemBlocks = new LinkedList<ItemBlock>();
+	private static List<BlockItem> itemBlocks = new LinkedList<>();
 
 	public void blocks(
-			IForgeRegistry<Block> registry )
+			Registry<Block> registry )
 	{
 		final BlockHSVConfiguration configs[] = new BlockHSVConfiguration[] { FlatColoredBlocks.instance.normal, FlatColoredBlocks.instance.transparent, FlatColoredBlocks.instance.glowing };
 
@@ -150,7 +149,7 @@ public class FlatColoredBlocks
 			for ( int v = 0; v < hsvconfig.MAX_SHADE_VARIANT; ++v )
 			{
 				final BlockFlatColored cb = BlockFlatColored.construct( hsvconfig, v );
-				registry.register( cb );
+				Registry.register(registry, cb.getRegistryName(), cb );
 
 				final ItemBlockFlatColored cbi = new ItemBlockFlatColored( cb );
 				itemBlocks.add( cbi );

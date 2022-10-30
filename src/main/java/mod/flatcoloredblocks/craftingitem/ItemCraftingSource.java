@@ -1,20 +1,20 @@
 package mod.flatcoloredblocks.craftingitem;
 
 import mod.flatcoloredblocks.ModUtil;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 
 class ItemCraftingSource
 {
-	private final IInventory inv;
+	private final Container inv;
 	private final int slot;
 
 	private int used = 0;
 	boolean simulate = false;
 
 	public ItemCraftingSource(
-			final InventoryPlayer ip,
+			final Inventory ip,
 			final int x )
 	{
 		inv = ip;
@@ -44,7 +44,7 @@ class ItemCraftingSource
 		}
 		else
 		{
-			inv.decrStackSize( slot, i );
+			inv.removeItem( slot, i );
 		}
 	}
 
@@ -52,7 +52,7 @@ class ItemCraftingSource
 	{
 		if ( simulate )
 		{
-			ItemStack is = inv.getStackInSlot( slot );
+			ItemStack is = inv.getItem( slot );
 			if ( is != null )
 			{
 				is = is.copy();
@@ -61,7 +61,7 @@ class ItemCraftingSource
 			return is;
 		}
 
-		return inv.getStackInSlot( slot );
+		return inv.getItem( slot );
 	}
 
 }

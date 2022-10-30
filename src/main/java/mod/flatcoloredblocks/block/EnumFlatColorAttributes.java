@@ -1,43 +1,43 @@
 package mod.flatcoloredblocks.block;
 
-import java.util.Set;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.material.MaterialColor;
 
-import net.minecraft.block.material.MaterialColor;
-import net.minecraft.item.EnumDyeColor;
+import java.util.Set;
 
 public enum EnumFlatColorAttributes
 {
 	// non-colors
-	black( true, true, EnumDyeColor.BLACK, MaterialColor.BLACK ),
-	grey( true, true, EnumDyeColor.GRAY, MaterialColor.GRAY ),
-	silver( true, true, EnumDyeColor.LIGHT_GRAY, MaterialColor.LIGHT_GRAY ),
-	white( true, true, EnumDyeColor.WHITE, MaterialColor.SNOW ),
+	black( true, true, DyeColor.BLACK, MaterialColor.COLOR_BLACK ),
+	grey( true, true, DyeColor.GRAY, MaterialColor.COLOR_GRAY ),
+	silver( true, true, DyeColor.LIGHT_GRAY, MaterialColor.COLOR_LIGHT_GRAY ),
+	white( true, true, DyeColor.WHITE, MaterialColor.SNOW ),
 
 	// colors...
-	red( true, false, EnumDyeColor.RED, MaterialColor.RED ),
-	orange( true, false, EnumDyeColor.ORANGE, MaterialColor.ADOBE ),
-	yellow( true, false, EnumDyeColor.YELLOW, MaterialColor.YELLOW ),
-	lime( true, false, EnumDyeColor.LIME, MaterialColor.LIME ),
-	green( true, false, EnumDyeColor.GREEN, MaterialColor.GREEN ),
-	emerald( true, false, EnumDyeColor.GREEN, EnumDyeColor.CYAN, MaterialColor.GREEN ),
-	cyan( true, false, EnumDyeColor.CYAN, MaterialColor.CYAN ),
-	azure( true, false, EnumDyeColor.BLUE, EnumDyeColor.CYAN, MaterialColor.LIGHT_BLUE ),
-	blue( true, false, EnumDyeColor.BLUE, MaterialColor.BLUE ),
-	violet( true, false, EnumDyeColor.PURPLE, MaterialColor.PURPLE ),
-	magenta( true, false, EnumDyeColor.MAGENTA, MaterialColor.MAGENTA ),
-	pink( true, false, EnumDyeColor.PINK, MaterialColor.PINK ),
+	red( true, false, DyeColor.RED, MaterialColor.COLOR_RED ),
+	orange( true, false, DyeColor.ORANGE, MaterialColor.COLOR_ORANGE ),
+	yellow( true, false, DyeColor.YELLOW, MaterialColor.COLOR_YELLOW ),
+	lime( true, false, DyeColor.LIME, MaterialColor.COLOR_LIGHT_GREEN ),
+	green( true, false, DyeColor.GREEN, MaterialColor.COLOR_GREEN ),
+	emerald( true, false, DyeColor.GREEN, DyeColor.CYAN, MaterialColor.COLOR_GREEN ),
+	cyan( true, false, DyeColor.CYAN, MaterialColor.COLOR_CYAN ),
+	azure( true, false, DyeColor.BLUE, DyeColor.CYAN, MaterialColor.COLOR_LIGHT_BLUE ),
+	blue( true, false, DyeColor.BLUE, MaterialColor.COLOR_BLUE ),
+	violet( true, false, DyeColor.PURPLE, MaterialColor.COLOR_PURPLE ),
+	magenta( true, false, DyeColor.MAGENTA, MaterialColor.COLOR_MAGENTA ),
+	pink( true, false, DyeColor.PINK, MaterialColor.COLOR_PINK ),
 
 	// color modifiers
-	dark( false, false, EnumDyeColor.BLACK, MaterialColor.BLACK ),
-	light( false, false, EnumDyeColor.WHITE, MaterialColor.SNOW );
+	dark( false, false, DyeColor.BLACK, MaterialColor.COLOR_BLACK ),
+	light( false, false, DyeColor.WHITE, MaterialColor.SNOW );
 
 	// description of characteristic
 	public final boolean isModifier;
 	public final boolean isSaturated;
 
 	// dye information
-	public final EnumDyeColor primaryDye;
-	public final EnumDyeColor secondaryDye;
+	public final DyeColor primaryDye;
+	public final DyeColor secondaryDye;
 
 	// map color
 	public final MaterialColor mapColor;
@@ -45,8 +45,8 @@ public enum EnumFlatColorAttributes
 	EnumFlatColorAttributes(
 			final boolean isColor,
 			final boolean isSaturated,
-			final EnumDyeColor dye1,
-			final EnumDyeColor dye2,
+			final DyeColor dye1,
+			final DyeColor dye2,
 			final MaterialColor mapColor )
 	{
 		isModifier = !isColor;
@@ -59,7 +59,7 @@ public enum EnumFlatColorAttributes
 	EnumFlatColorAttributes(
 			final boolean isColor,
 			final boolean isSaturated,
-			final EnumDyeColor dye,
+			final DyeColor dye,
 			final MaterialColor mapColor )
 	{
 		isModifier = !isColor;
@@ -69,17 +69,17 @@ public enum EnumFlatColorAttributes
 		this.mapColor = mapColor;
 	}
 
-	public static EnumDyeColor getAlternateDye(
+	public static DyeColor getAlternateDye(
 			final Set<EnumFlatColorAttributes> characteristics )
 	{
 		if ( characteristics.contains( EnumFlatColorAttributes.orange ) && characteristics.contains( EnumFlatColorAttributes.dark ) )
 		{
-			return EnumDyeColor.BROWN;
+			return DyeColor.BROWN;
 		}
 
 		if ( characteristics.contains( EnumFlatColorAttributes.blue ) && characteristics.contains( EnumFlatColorAttributes.light ) )
 		{
-			return EnumDyeColor.LIGHT_BLUE;
+			return DyeColor.LIGHT_BLUE;
 		}
 
 		return null;

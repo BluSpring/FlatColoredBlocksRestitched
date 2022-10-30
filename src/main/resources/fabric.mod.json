@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "flatcoloredblocksfabric",
+  "version": "${file.jarVersion}",
+  "name": "Flat Colored Blocks Restitched",
+  "description": "A mod that generates a selection of simple colored blocks, transparent blocks, and glowing blocks ( all configurable ) for use in building and creative projects.",
+  "authors": [
+    "AlgorithmX2",
+    "BluSpring"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "fcb.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "mod.flatcoloredblocks.FlatColoredBlocks"
+    ],
+    "client": [
+      "mod.flatcoloredblocks.client.ClientSide"
+    ]
+  },
+  "mixins": [
+    "flatcoloredblocks.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.8",
+    "fabric": "*",
+    "minecraft": ">=1.19",
+    "advanced_runtime_resource_pack": "*"
+  }
+}

@@ -1,8 +1,8 @@
 {
     "parent": "block/block",
 	"textures": {
-		"all": "flatcoloredblocks:blocks/flatcoloredblock_NOISE",
-		"particle": "flatcoloredblocks:blocks/flatcoloredblock_NOISE"
+		"all": "flatcoloredblocks:blocks/flatcoloredblock_noise",
+		"particle": "flatcoloredblocks:blocks/flatcoloredblock_noise"
 	},
     "elements": [
         {   "from": [ 0, 0, 0 ],

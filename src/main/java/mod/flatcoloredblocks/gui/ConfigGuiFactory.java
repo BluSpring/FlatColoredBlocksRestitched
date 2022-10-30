@@ -1,6 +1,6 @@
 package mod.flatcoloredblocks.gui;
 
-import net.minecraft.client.gui.GuiScreen;
+//import net.minecraft.client.gui.GuiScreen;
 
 /*
 public class ConfigGuiFactory extends FMLConfigGuiFactory

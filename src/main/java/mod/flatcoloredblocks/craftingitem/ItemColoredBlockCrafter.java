@@ -1,29 +1,26 @@
 package mod.flatcoloredblocks.craftingitem;
 
+import com.google.common.base.Stopwatch;
+import mod.flatcoloredblocks.FlatColoredBlocks;
+import mod.flatcoloredblocks.RegistryHelper;
+import mod.flatcoloredblocks.RegistryItem;
+import mod.flatcoloredblocks.gui.ModGuiTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
-
-import mod.flatcoloredblocks.FlatColoredBlocks;
-import mod.flatcoloredblocks.gui.ModGuiTypes;
-import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.NetworkHooks;
-
-public class ItemColoredBlockCrafter extends Item
+public class ItemColoredBlockCrafter extends Item implements RegistryItem
 {
 
 	public int scrollIndex = -1;
@@ -32,37 +29,39 @@ public class ItemColoredBlockCrafter extends Item
 
 	public ItemColoredBlockCrafter()
 	{
-		super( ( new Item.Properties() ).group( FlatColoredBlocks.instance.creativeTab ) );
+		super( ( new Item.Properties() ).tab( FlatColoredBlocks.instance.creativeTab ) );
 		setRegistryName( FlatColoredBlocks.MODID, "coloredcraftingitem" );
 	}
 
 	@Override
-	public ActionResult<ItemStack> onItemRightClick(
-			final World worldIn,
-			final EntityPlayer playerIn,
-			final EnumHand hand )
+	public InteractionResultHolder<ItemStack> use(
+			final Level worldIn,
+			final Player playerIn,
+			final InteractionHand hand )
 	{
-		final ItemStack itemStackIn = playerIn.getHeldItem( hand );
+		final ItemStack itemStackIn = playerIn.getItemInHand( hand );
 
-		if ( worldIn.isRemote )
+		if ( worldIn.isClientSide )
 		{
-			return ActionResult.newResult( EnumActionResult.SUCCESS, itemStackIn );
+			return InteractionResultHolder.success(itemStackIn);
 		}
 
-		if ( playerIn instanceof EntityPlayerMP )
+		if ( playerIn instanceof ServerPlayer)
 		{
-			NetworkHooks.openGui( (EntityPlayerMP) playerIn, ModGuiTypes.colored_crafter.create( playerIn, worldIn, 0, 0, 0 ), null );
+			var container = ModGuiTypes.colored_crafter.create(playerIn, worldIn, 0, 0, 0);
+			playerIn.openMenu((ContainerColoredBlockCrafter) container);
+			//NetworkHooks.openGui( (ServerPlayer) playerIn, ModGuiTypes.colored_crafter.create( playerIn, worldIn, 0, 0, 0 ), null );
 		}
 
-		return ActionResult.newResult( EnumActionResult.SUCCESS, itemStackIn );
+		return InteractionResultHolder.success(itemStackIn);
 	}
 
 	@Override
-	public void addInformation(
+	public void appendHoverText(
 			ItemStack stack,
-			World worldIn,
-			List<ITextComponent> tooltip,
-			ITooltipFlag flagIn )
+			Level worldIn,
+			List<Component> tooltip,
+			TooltipFlag flagIn )
 	{
 		if ( scrollIndex == -1 && worldIn != null )
 		{
@@ -70,9 +69,9 @@ public class ItemColoredBlockCrafter extends Item
 			stopWatch = Stopwatch.createStarted();
 
 			options.clear();
-			options.addAll( new ItemTags.Wrapper( new ResourceLocation( FlatColoredBlocks.instance.config.solidCraftingBlock ) ).getAllElements() );
-			options.addAll( new ItemTags.Wrapper( new ResourceLocation( FlatColoredBlocks.instance.config.glowingCraftingBlock ) ).getAllElements() );
-			options.addAll( new ItemTags.Wrapper( new ResourceLocation( FlatColoredBlocks.instance.config.transparentCraftingBlock ) ).getAllElements() );
+			options.addAll( RegistryHelper.getItemsFromTag(new ResourceLocation( FlatColoredBlocks.instance.config.solidCraftingBlock ) ) );
+			options.addAll( RegistryHelper.getItemsFromTag(new ResourceLocation( FlatColoredBlocks.instance.config.glowingCraftingBlock ) ) );
+			options.addAll( RegistryHelper.getItemsFromTag(new ResourceLocation( FlatColoredBlocks.instance.config.transparentCraftingBlock ) ) );
 		}
 
 		if ( !options.isEmpty() && scrollIndex >= 0 )
@@ -84,12 +83,12 @@ public class ItemColoredBlockCrafter extends Item
 			}
 
 			Item it = options.get( scrollIndex );
-			tooltip.add( new TextComponentTranslation( "item.flatcoloredblocks.coloredcraftingitem.tip1", it.getDisplayName( it.getDefaultInstance() ) ) );
+			tooltip.add( Component.translatable( "item.flatcoloredblocks.coloredcraftingitem.tip1", it.getName( it.getDefaultInstance() ) ) );
 		}
 
-		tooltip.add( new TextComponentTranslation( "item.flatcoloredblocks.coloredcraftingitem.tip2" ) );
+		tooltip.add( Component.translatable( "item.flatcoloredblocks.coloredcraftingitem.tip2" ) );
 
-		super.addInformation( stack, worldIn, tooltip, flagIn );
+		super.appendHoverText( stack, worldIn, tooltip, flagIn );
 	}
 
 }

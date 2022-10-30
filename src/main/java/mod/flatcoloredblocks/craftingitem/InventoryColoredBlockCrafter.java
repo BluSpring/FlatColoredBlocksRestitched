@@ -1,47 +1,43 @@
 package mod.flatcoloredblocks.craftingitem;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.ModUtil;
+import mod.flatcoloredblocks.RegistryHelper;
 import mod.flatcoloredblocks.block.BlockFlatColored;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
 import mod.flatcoloredblocks.block.EnumFlatColorAttributes;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.EnumDyeColor;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.common.Tags;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Generates and Crafts items that are seen in the crafting item's gui.
  */
-public class InventoryColoredBlockCrafter implements IInventory
+public class InventoryColoredBlockCrafter implements Container
 {
 
-	private final EntityPlayer thePlayer;
+	private final Player thePlayer;
 	private final ContainerColoredBlockCrafter craftingContainer;
 
-	private final ArrayList<ItemStack> options = new ArrayList<ItemStack>();
+	private final ArrayList<ItemStack> options = new ArrayList<>();
 	public int offset = 0;
 
 	public InventoryColoredBlockCrafter(
-			final EntityPlayer thePlayer,
+			final Player thePlayer,
 			final ContainerColoredBlockCrafter coloredCrafterContainer )
 	{
 		this.thePlayer = thePlayer;
@@ -50,24 +46,24 @@ public class InventoryColoredBlockCrafter implements IInventory
 
 	public static HashMap<Object, Collection<Item>> getDyeList()
 	{
-		final HashMap<Object, Collection<Item>> dyeList = new HashMap<Object, Collection<Item>>();
+		final HashMap<Object, Collection<Item>> dyeList = new HashMap<>();
 
-		tagIntoList( dyeList, EnumDyeColor.BLACK, Tags.Items.DYES_BLACK );
-		tagIntoList( dyeList, EnumDyeColor.RED, Tags.Items.DYES_RED );
-		tagIntoList( dyeList, EnumDyeColor.GREEN, Tags.Items.DYES_GREEN );
-		tagIntoList( dyeList, EnumDyeColor.BROWN, Tags.Items.DYES_BROWN );
-		tagIntoList( dyeList, EnumDyeColor.BLUE, Tags.Items.DYES_BLUE );
-		tagIntoList( dyeList, EnumDyeColor.PURPLE, Tags.Items.DYES_PURPLE );
-		tagIntoList( dyeList, EnumDyeColor.CYAN, Tags.Items.DYES_CYAN );
-		tagIntoList( dyeList, EnumDyeColor.LIGHT_GRAY, Tags.Items.DYES_LIGHT_GRAY );
-		tagIntoList( dyeList, EnumDyeColor.GRAY, Tags.Items.DYES_GRAY );
-		tagIntoList( dyeList, EnumDyeColor.PINK, Tags.Items.DYES_PINK );
-		tagIntoList( dyeList, EnumDyeColor.LIME, Tags.Items.DYES_LIME );
-		tagIntoList( dyeList, EnumDyeColor.YELLOW, Tags.Items.DYES_YELLOW );
-		tagIntoList( dyeList, EnumDyeColor.LIGHT_BLUE, Tags.Items.DYES_LIGHT_BLUE );
-		tagIntoList( dyeList, EnumDyeColor.MAGENTA, Tags.Items.DYES_MAGENTA );
-		tagIntoList( dyeList, EnumDyeColor.ORANGE, Tags.Items.DYES_ORANGE );
-		tagIntoList( dyeList, EnumDyeColor.WHITE, Tags.Items.DYES_WHITE );
+		tagIntoList( dyeList, DyeColor.BLACK, getTagKey("black_dyes"));
+		tagIntoList( dyeList, DyeColor.RED, getTagKey("red_dyes") );
+		tagIntoList( dyeList, DyeColor.GREEN, getTagKey("green_dyes") );
+		tagIntoList( dyeList, DyeColor.BROWN, getTagKey("brown_dyes") );
+		tagIntoList( dyeList, DyeColor.BLUE, getTagKey("blue_dyes") );
+		tagIntoList( dyeList, DyeColor.PURPLE, getTagKey("purple_dyes") );
+		tagIntoList( dyeList, DyeColor.CYAN, getTagKey("cyan_dyes") );
+		tagIntoList( dyeList, DyeColor.LIGHT_GRAY, getTagKey("light_gray_dyes") );
+		tagIntoList( dyeList, DyeColor.GRAY, getTagKey("gray_dyes") );
+		tagIntoList( dyeList, DyeColor.PINK, getTagKey("pink_dyes") );
+		tagIntoList( dyeList, DyeColor.LIME, getTagKey("lime_dyes") );
+		tagIntoList( dyeList, DyeColor.YELLOW, getTagKey("yellow_dyes") );
+		tagIntoList( dyeList, DyeColor.LIGHT_BLUE, getTagKey("light_blue_dyes") );
+		tagIntoList( dyeList, DyeColor.MAGENTA, getTagKey("magenta_dyes") );
+		tagIntoList( dyeList, DyeColor.ORANGE, getTagKey("orange_dyes") );
+		tagIntoList( dyeList, DyeColor.WHITE, getTagKey("white_dyes") );
 		tagIntoList( dyeList, EnumFlatBlockType.NORMAL, getItems( FlatColoredBlocks.instance.config.solidCraftingBlock ) );
 		tagIntoList( dyeList, EnumFlatBlockType.GLOWING, getItems( FlatColoredBlocks.instance.config.glowingCraftingBlock ) );
 		tagIntoList( dyeList, EnumFlatBlockType.TRANSPARENT, getItems( FlatColoredBlocks.instance.config.transparentCraftingBlock ) );
@@ -75,18 +71,22 @@ public class InventoryColoredBlockCrafter implements IInventory
 		return dyeList;
 	}
 
+	private static TagKey<Item> getTagKey(String name) {
+		return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation("c", name));
+	}
+
 	private static void tagIntoList(
 			HashMap<Object, Collection<Item>> dyeList,
 			Enum<?> e,
-			Tag<Item> itemList )
+			TagKey<Item> itemList )
 	{
-		dyeList.put( e, itemList.getAllElements() );
+		dyeList.put( e, RegistryHelper.getItemsFromTag(itemList));
 	}
 
 	private InventorySummary scanPlayerInventory()
 	{
-		final EnumSet<EnumDyeColor> dyes = EnumSet.noneOf( EnumDyeColor.class );
-		final InventoryPlayer ip = thePlayer.inventory;
+		final EnumSet<DyeColor> dyes = EnumSet.noneOf( DyeColor.class );
+		final Inventory ip = thePlayer.getInventory();
 
 		final HashMap<Object, Collection<Item>> dyeList = getDyeList();
 		final HashMap<Object, HashSet<ItemCraftingSource>> stacks = new HashMap<Object, HashSet<ItemCraftingSource>>();
@@ -102,9 +102,9 @@ public class InventoryColoredBlockCrafter implements IInventory
 
 		stacks.put( null, new HashSet<ItemCraftingSource>() );
 
-		for ( int x = 0; x < ip.getSizeInventory(); ++x )
+		for ( int x = 0; x < ip.getContainerSize(); ++x )
 		{
-			final ItemStack is = ip.getStackInSlot( x );
+			final ItemStack is = ip.getItem( x );
 
 			if ( is != null )
 			{
@@ -115,9 +115,9 @@ public class InventoryColoredBlockCrafter implements IInventory
 						if ( is.getItem() == ore )
 						{
 
-							if ( items.getKey() instanceof EnumDyeColor )
+							if ( items.getKey() instanceof DyeColor )
 							{
-								dyes.add( (EnumDyeColor) items.getKey() );
+								dyes.add( (DyeColor) items.getKey() );
 							}
 							else
 							{
@@ -147,29 +147,28 @@ public class InventoryColoredBlockCrafter implements IInventory
 		return new InventorySummary( hasCobblestone, hasGlowstone, hasGlass, stacks, dyes );
 	}
 
-	private static Tag<Item> getItems(
+	private static TagKey<Item> getItems(
 			final String name )
 	{
-		return new ItemTags.Wrapper( new ResourceLocation( name ) );
+		return TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation( name ) );
 	}
 
 	/**
 	 * recalculate the entire container.
 	 */
-	public void updateContents()
-	{
+	public void updateContents() throws IOException {
 		options.clear();
 		BlockFlatColored.getAllShades( options );
 
 		final InventorySummary da = scanPlayerInventory();
-		final EnumSet<EnumDyeColor> dyes = da.dyes;
+		final EnumSet<DyeColor> dyes = da.dyes;
 
 		final Iterator<ItemStack> i = options.iterator();
 		while ( i.hasNext() )
 		{
 			final ItemStack is = i.next();
-			final Block blk = Block.getBlockFromItem( is.getItem() );
-			final IBlockState state = ModUtil.getFlatColoredBlockState( (BlockFlatColored) blk, is );
+			final Block blk = Block.byItem( is.getItem() );
+			final BlockState state = ModUtil.getFlatColoredBlockState( (BlockFlatColored) blk, is );
 
 			final Set<EnumFlatColorAttributes> charistics = ( (BlockFlatColored) blk ).getFlatColorAttributes( state );
 			boolean isGood = true;
@@ -182,7 +181,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 				}
 			}
 
-			final EnumDyeColor alternateDye = EnumFlatColorAttributes.getAlternateDye( charistics );
+			final DyeColor alternateDye = EnumFlatColorAttributes.getAlternateDye( charistics );
 			if ( alternateDye != null && dyes.contains( alternateDye ) )
 			{
 				isGood = true;
@@ -198,25 +197,13 @@ public class InventoryColoredBlockCrafter implements IInventory
 	}
 
 	@Override
-	public boolean hasCustomName()
-	{
-		return false;
-	}
-
-	@Override
-	public ITextComponent getDisplayName()
-	{
-		return null;
-	}
-
-	@Override
-	public int getSizeInventory()
+	public int getContainerSize()
 	{
 		return options.size();
 	}
 
 	@Override
-	public ItemStack getStackInSlot(
+	public ItemStack getItem(
 			int index )
 	{
 
@@ -230,7 +217,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 	}
 
 	@Override
-	public ItemStack decrStackSize(
+	public ItemStack removeItem(
 			int index,
 			final int count )
 	{
@@ -264,17 +251,17 @@ public class InventoryColoredBlockCrafter implements IInventory
 		int outAmount = 0;
 
 		final InventorySummary da = scanPlayerInventory();
-		final Block blk = Block.getBlockFromItem( reqItem.getItem() );
-		final IBlockState state = ModUtil.getFlatColoredBlockState( (BlockFlatColored) blk, reqItem );
+		final Block blk = Block.byItem( reqItem.getItem() );
+		final BlockState state = ModUtil.getFlatColoredBlockState( (BlockFlatColored) blk, reqItem );
 
 		final Set<EnumFlatColorAttributes> charistics = ( (BlockFlatColored) blk ).getFlatColorAttributes( state );
 		final Object Craftable = ( (BlockFlatColored) blk ).getCraftable();
-		final HashSet<EnumDyeColor> requiredDyes = new HashSet<EnumDyeColor>();
+		final HashSet<DyeColor> requiredDyes = new HashSet<DyeColor>();
 
 		final int craftAmount = Craftable instanceof EnumFlatBlockType ? ( (EnumFlatBlockType) Craftable ).getOutputCount() : 1;
 
-		final EnumDyeColor alternateDye = EnumFlatColorAttributes.getAlternateDye( charistics );
-		final HashSet<EnumDyeColor> alternateSet = new HashSet<EnumDyeColor>();
+		final DyeColor alternateDye = EnumFlatColorAttributes.getAlternateDye( charistics );
+		final HashSet<DyeColor> alternateSet = new HashSet<DyeColor>();
 
 		if ( alternateDye != null )
 		{
@@ -297,7 +284,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 				isGood = false;
 			}
 
-			HashSet<EnumDyeColor> usedSet = alternateSet;
+			HashSet<DyeColor> usedSet = alternateSet;
 			availableDyeTest:
 			{
 
@@ -314,7 +301,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 
 				// no alternate, try standard set.
 				usedSet = requiredDyes;
-				for ( final EnumDyeColor dye : requiredDyes )
+				for ( final DyeColor dye : requiredDyes )
 				{
 					final ItemCraftingSource is = findItem( da.stacks.get( dye ), simulate );
 					if ( is == null )
@@ -326,7 +313,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 
 			if ( isGood && isx != null )
 			{
-				for ( final EnumDyeColor dye : usedSet )
+				for ( final DyeColor dye : usedSet )
 				{
 					final ItemCraftingSource is = findItem( da.stacks.get( dye ), simulate );
 
@@ -342,7 +329,11 @@ public class InventoryColoredBlockCrafter implements IInventory
 			}
 		}
 
-		updateContents();
+		try {
+			updateContents();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		if ( outAmount <= 0 )
 		{
@@ -373,14 +364,14 @@ public class InventoryColoredBlockCrafter implements IInventory
 	}
 
 	@Override
-	public ItemStack removeStackFromSlot(
+	public ItemStack removeItemNoUpdate(
 			final int index )
 	{
 		return ModUtil.getEmptyStack();
 	}
 
 	@Override
-	public void setInventorySlotContents(
+	public void setItem(
 			final int index,
 			final ItemStack stack )
 	{
@@ -388,40 +379,40 @@ public class InventoryColoredBlockCrafter implements IInventory
 	}
 
 	@Override
-	public int getInventoryStackLimit()
+	public int getMaxStackSize()
 	{
 		return 0;
 	}
 
 	@Override
-	public void markDirty()
+	public void setChanged()
 	{
 
 	}
 
 	@Override
-	public boolean isUsableByPlayer(
-			final EntityPlayer player )
+	public boolean stillValid(
+			final Player player )
 	{
 		return true;
 	}
 
 	@Override
-	public void openInventory(
-			final EntityPlayer player )
+	public void startOpen(
+			final Player player )
 	{
 
 	}
 
 	@Override
-	public void closeInventory(
-			final EntityPlayer player )
+	public void stopOpen(
+			final Player player )
 	{
 
 	}
 
 	@Override
-	public boolean isItemValidForSlot(
+	public boolean canPlaceItem(
 			final int index,
 			final ItemStack stack )
 	{
@@ -429,28 +420,7 @@ public class InventoryColoredBlockCrafter implements IInventory
 	}
 
 	@Override
-	public int getField(
-			final int id )
-	{
-		return 0;
-	}
-
-	@Override
-	public void setField(
-			final int id,
-			final int value )
-	{
-
-	}
-
-	@Override
-	public int getFieldCount()
-	{
-		return 0;
-	}
-
-	@Override
-	public void clear()
+	public void clearContent()
 	{
 		options.clear();
 	}
@@ -467,18 +437,6 @@ public class InventoryColoredBlockCrafter implements IInventory
 		}
 
 		return true;
-	}
-
-	@Override
-	public ITextComponent getCustomName()
-	{
-		return null;
-	}
-
-	@Override
-	public ITextComponent getName()
-	{
-		return null;
 	}
 
 }

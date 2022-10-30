@@ -1,7 +1,9 @@
 package mod.flatcoloredblocks.craftingitem;
 
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+
+import java.io.IOException;
 
 public class SlotChangeDetect extends Slot
 {
@@ -9,7 +11,7 @@ public class SlotChangeDetect extends Slot
 	InventoryColoredBlockCrafter secondInv;
 
 	public SlotChangeDetect(
-			final IInventory inv,
+			final Container inv,
 			final InventoryColoredBlockCrafter secondInv,
 			final int index,
 			final int xPosition,
@@ -20,10 +22,14 @@ public class SlotChangeDetect extends Slot
 	}
 
 	@Override
-	public void onSlotChanged()
+	public void setChanged()
 	{
-		super.onSlotChanged();
-		secondInv.updateContents();
+		super.setChanged();
+		try {
+			secondInv.updateContents();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

@@ -1,37 +1,34 @@
 
 package mod.flatcoloredblocks.resource;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
+import com.mojang.blaze3d.platform.NativeImage;
 import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.block.BlockHSVConfiguration;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
 import mod.flatcoloredblocks.client.ClientSide;
+import net.devtech.arrp.api.RRPCallback;
+import net.devtech.arrp.api.RuntimeResourcePack;
+import net.devtech.arrp.json.blockstate.JState;
+import net.devtech.arrp.json.models.JModel;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.resources.IReloadableResourceManager;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 
 public class ResourceGenerator
 {
+	public final RuntimeResourcePack resourcePack = RuntimeResourcePack.create(FlatColoredBlocks.MODID + ":" + "internal_generator");
 
 	public void init()
 	{
-		IResourceManager manager = Minecraft.getInstance().getResourceManager();
-
-		if ( manager instanceof IReloadableResourceManager )
-		{
-			( (IReloadableResourceManager) manager ).addReloadListener( new CustomResourceInjector() );
-		}
-
-		MinecraftForge.EVENT_BUS.register( this );
+		// ARRP is a godsend
+		RRPCallback.AFTER_VANILLA.register(a -> {
+			populateResources();
+			a.add(resourcePack);
+		});
 	}
 
 	public void populateResources()
@@ -49,8 +46,9 @@ public class ResourceGenerator
 		{
 			String name = config.getBlockName( varient );
 
-			String blockstates = "{\"multipart\":[{\"apply\":{\"model\":\"flatcoloredblocks:block/" + name + "\"}}]}";
-			CustomResourceInjector.addResource( "blockstates", name, ".json", blockstates.getBytes() );
+			JState blockState = JState.state(JState.multipart(JState.model("flatcoloredblocks:block/" + name)));
+
+			resourcePack.addBlockState(blockState, new ResourceLocation(FlatColoredBlocks.MODID, name));
 
 			if ( type == EnumFlatBlockType.TRANSPARENT )
 			{
@@ -59,8 +57,8 @@ public class ResourceGenerator
 
 				try
 				{
-					final IResource iresource = Minecraft.getInstance().getResourceManager().getResource( sourceLoc );
-					final NativeImage bi = NativeImage.read( iresource.getInputStream() );
+					final URL iresource = ResourceGenerator.class.getResource("/assets/" + sourceLoc.getNamespace() + "/" + sourceLoc.getPath());
+					final NativeImage bi = NativeImage.read( iresource.openStream() );
 
 					final BufferedImage image = new BufferedImage( bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_4BYTE_ABGR );
 					final int xx = bi.getWidth();
@@ -77,25 +75,31 @@ public class ResourceGenerator
 						}
 					}
 
-					ByteArrayOutputStream data = new ByteArrayOutputStream( 0 );
-					ImageIO.write( image, "png", data );
-					CustomResourceInjector.addResource( "textures/blocks", textureName.getPath(), ".png", data.toByteArray() );
+					resourcePack.addTexture(new ResourceLocation(FlatColoredBlocks.MODID, "blocks/" + textureName.getPath()), image);
 				}
 				catch ( IOException e )
 				{
 					// fails the first time it runs.
 				}
 
-				String model = "{\"parent\":\"flatcoloredblocks:block/flatcoloredblock_" + config.textureStyle + "\","
-						+ "\"textures\":{\"all\":\"flatcoloredblocks:blocks/" + textureName.getPath() + "\",\"particle\":\"flatcoloredblocks:blocks/" + textureName.getPath() + "\"}}";
-				CustomResourceInjector.addResource( "models/block", name, ".json", model.getBytes() );
-				CustomResourceInjector.addResource( "models/item", name, ".json", model.getBytes() );
+				 var model = JModel
+						 .model("flatcoloredblocks:block/flatcoloredblock_" + config.textureStyle)
+						 .textures(
+								 JModel.textures()
+										 .var("all", "flatcoloredblocks:blocks/" + textureName.getPath())
+										 .particle("flatcoloredblocks:blocks/" + textureName.getPath())
+						 );
+
+				resourcePack.addModel(model, new ResourceLocation(FlatColoredBlocks.MODID, "block/" + name));
+				resourcePack.addModel(model, new ResourceLocation(FlatColoredBlocks.MODID, "item/" + name));
 			}
 			else
 			{
-				String model = "{\"parent\":\"flatcoloredblocks:block/flatcoloredblock_" + config.textureStyle + "\"}";
-				CustomResourceInjector.addResource( "models/block", name, ".json", model.getBytes() );
-				CustomResourceInjector.addResource( "models/item", name, ".json", model.getBytes() );
+				var model = JModel
+						.model("flatcoloredblocks:block/flatcoloredblock_" + config.textureStyle);
+
+				resourcePack.addModel(model, new ResourceLocation(FlatColoredBlocks.MODID, "block/" + name));
+				resourcePack.addModel(model, new ResourceLocation(FlatColoredBlocks.MODID, "item/" + name));
 			}
 		}
 	}

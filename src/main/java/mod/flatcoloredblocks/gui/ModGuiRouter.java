@@ -1,33 +1,28 @@
 package mod.flatcoloredblocks.gui;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.network.FMLPlayMessages;
-import net.minecraftforge.fml.network.FMLPlayMessages.OpenContainer;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.Level;
 
 /**
  * Client / Server Gui + Container Handler
  */
-public class ModGuiRouter implements Function<FMLPlayMessages.OpenContainer, GuiScreen>, Supplier<Function<FMLPlayMessages.OpenContainer, GuiScreen>>
+public class ModGuiRouter
 {
-
-	public static Container createContainer(
+	public static AbstractContainerMenu createContainer(
 			ModGuiTypes type,
-			final EntityPlayer player,
-			final World world,
+			final Player player,
+			final Level world,
 			final int x,
 			final int y,
 			final int z )
 	{
 		try
 		{
-			return (Container) type.container_construtor.newInstance( player, world, x, y, z );
+			return (AbstractContainerMenu) type.container_construtor.newInstance( player, world, x, y, z );
 		}
 		catch ( final Exception e )
 		{
@@ -35,24 +30,16 @@ public class ModGuiRouter implements Function<FMLPlayMessages.OpenContainer, Gui
 		}
 	}
 
-	@Override
-	public GuiScreen apply(
-			OpenContainer t )
+	public Screen apply(ResourceLocation id)
 	{
 		try
 		{
-			final ModGuiTypes guiType = ModGuiTypes.valueOf( t.getId().getPath() );
-			return (GuiScreen) guiType.gui_construtor.newInstance( Minecraft.getInstance().player, Minecraft.getInstance().player.world, 0, 0, 0 );
+			final ModGuiTypes guiType = ModGuiTypes.valueOf( id.getPath() );
+			return (Screen) guiType.gui_construtor.newInstance( Minecraft.getInstance().player, Minecraft.getInstance().player.level, 0, 0, 0 );
 		}
 		catch ( final Exception e )
 		{
 			throw new RuntimeException( e );
 		}
-	}
-
-	@Override
-	public Function<OpenContainer, GuiScreen> get()
-	{
-		return this;
 	}
 }

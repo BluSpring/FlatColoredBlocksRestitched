@@ -2,9 +2,11 @@ package mod.flatcoloredblocks.network.packets;
 
 import mod.flatcoloredblocks.craftingitem.ContainerColoredBlockCrafter;
 import mod.flatcoloredblocks.network.ModPacket;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.Container;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+
+import java.io.IOException;
 
 /**
  * Used to synchronize scroll bar on crafting item between server and client.
@@ -14,11 +16,14 @@ public class ScrolingGuiPacket extends ModPacket
 {
 	public float scroll = 0;
 
+	public ScrolingGuiPacket(FriendlyByteBuf buf) throws IOException {
+		super(buf);
+	}
+
 	@Override
 	public void server(
-			final EntityPlayerMP player )
-	{
-		final Container c = player.openContainer;
+			final ServerPlayer player ) throws IOException {
+		final AbstractContainerMenu c = player.containerMenu;
 		if ( c instanceof ContainerColoredBlockCrafter )
 		{
 			final ContainerColoredBlockCrafter ccc = (ContainerColoredBlockCrafter) c;
@@ -28,14 +33,14 @@ public class ScrolingGuiPacket extends ModPacket
 
 	@Override
 	public void getPayload(
-			final PacketBuffer buffer )
+			final FriendlyByteBuf buffer )
 	{
 		buffer.writeFloat( scroll );
 	}
 
 	@Override
 	public void readPayload(
-			final PacketBuffer buffer )
+			final FriendlyByteBuf buffer )
 	{
 		// no data..
 		scroll = buffer.readFloat();

@@ -1,11 +1,11 @@
 package mod.flatcoloredblocks.network;
 
-import java.io.IOException;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerPlayer;
 
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.INetHandler;
-import net.minecraft.network.Packet;
-import net.minecraft.network.PacketBuffer;
+import java.io.IOException;
 
 /**
  * Base Packet to be implemented.
@@ -14,11 +14,10 @@ import net.minecraft.network.PacketBuffer;
 public abstract class ModPacket implements Packet
 {
 
-	EntityPlayerMP serverEntity = null;
+	ServerPlayer serverEntity = null;
 
 	public void server(
-			final EntityPlayerMP playerEntity )
-	{
+			final ServerPlayer playerEntity ) throws IOException {
 		throw new RuntimeException( getClass().getName() + " is not a server packet." );
 	}
 
@@ -28,28 +27,32 @@ public abstract class ModPacket implements Packet
 	}
 
 	abstract public void getPayload(
-			PacketBuffer buffer );
+			FriendlyByteBuf buffer );
 
 	abstract public void readPayload(
-			PacketBuffer buffer );
+			FriendlyByteBuf buffer );
 
-	@Override
-	public void readPacketData(
-			final PacketBuffer buf ) throws IOException
+	public ModPacket(
+			final FriendlyByteBuf buf
+	) throws IOException {
+		read(buf);
+	}
+
+	public void read(
+			final FriendlyByteBuf buf ) throws IOException
 	{
-		readPacketData( buf );
+
 	}
 
 	@Override
-	public void writePacketData(
-			final PacketBuffer buf ) throws IOException
-	{
+	public void write(
+			final FriendlyByteBuf buf ) {
 		getPayload( buf );
 	}
 
 	@Override
-	public void processPacket(
-			final INetHandler handler )
+	public void handle(
+			final PacketListener handler )
 	{
 		if ( serverEntity == null )
 		{
@@ -57,7 +60,11 @@ public abstract class ModPacket implements Packet
 		}
 		else
 		{
-			server( serverEntity );
+			try {
+				server( serverEntity );
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 

@@ -1,30 +1,29 @@
 package mod.flatcoloredblocks;
 
+import com.google.common.base.Stopwatch;
+import mod.flatcoloredblocks.block.BlockFlatColored;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
-
-import mod.flatcoloredblocks.block.BlockFlatColored;
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
-
-public class CreativeTab extends ItemGroup
+public class CreativeTab extends CreativeModeTab
 {
 
 	public CreativeTab()
 	{
-		super( "FlatColoredBlocks" );
+		super(6, "FlatColoredBlocks" );
 	}
 
 	private int listOffset = 0;
 	private Stopwatch offsetTimer;
 	private NonNullList<ItemStack> list;
 
-	public ItemStack createIcon()
+	public ItemStack makeIcon()
 	{
 		if ( list == null )
 		{
@@ -52,20 +51,20 @@ public class CreativeTab extends ItemGroup
 	{
 		offsetTimer = Stopwatch.createStarted();
 		list = NonNullList.create();
-		fill( list );
+		fillItemList( list );
 
 		for ( int x = 0; x < list.size(); ++x )
 		{
 			final ItemStack is = list.get( x );
 
-			if ( !( is.getItem() instanceof ItemBlock ) )
+			if ( !( is.getItem() instanceof BlockItem) )
 			{
 				list.remove( x );
 				--x;
 				continue;
 			}
 
-			final ItemBlock ib = (ItemBlock) is.getItem();
+			final BlockItem ib = (BlockItem) is.getItem();
 			final Block b = ib.getBlock();
 
 			// Remove other peoples stuff list..
@@ -90,7 +89,7 @@ public class CreativeTab extends ItemGroup
 
 		if ( list.isEmpty() )
 		{
-			fill( list );
+			fillItemList( list );
 		}
 	}
 

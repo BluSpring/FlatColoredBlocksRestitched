@@ -1,39 +1,53 @@
 package mod.flatcoloredblocks.craftingitem;
 
+import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.ModUtil;
 import mod.flatcoloredblocks.network.NetworkRouter;
 import mod.flatcoloredblocks.network.packets.ScrolingGuiPacket;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
 
 /**
  * Container for for crafting item's gui, manages scroll communication slots,
  * and shift clicking.
  */
-public class ContainerColoredBlockCrafter extends Container
+public class ContainerColoredBlockCrafter extends AbstractContainerMenu implements MenuProvider
 {
 
-	final EntityPlayer thePlayer;
+	final Player thePlayer;
 	final InventoryColoredBlockCrafter craftinginv;
 
 	public ContainerColoredBlockCrafter(
-			final EntityPlayer player,
-			final World world,
+			final int id,
+			final Player player,
+			final Level world,
 			final int x,
 			final int y,
 			final int z )
 	{
+		super(FlatColoredBlocks.instance.containerType, id);
 		thePlayer = player;
 		craftinginv = new InventoryColoredBlockCrafter( thePlayer, this );
-		craftinginv.updateContents();
+		try {
+			craftinginv.updateContents();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
-		final IInventory playerInventory = player.inventory;
+		final Inventory playerInventory = player.getInventory();
 		final int i = ( 7 - 4 ) * 18;
 
 		for ( int j = 0; j < 7; ++j )
@@ -59,24 +73,24 @@ public class ContainerColoredBlockCrafter extends Container
 	}
 
 	@Override
-	public boolean canInteractWith(
-			final EntityPlayer playerIn )
+	public boolean stillValid(
+			final Player playerIn )
 	{
 		return true;
 	}
 
 	@Override
-	public ItemStack transferStackInSlot(
-			final EntityPlayer playerIn,
+	public ItemStack quickMoveStack(
+			final Player playerIn,
 			final int index )
 	{
 		int emptySlots = 0;
 
-		for ( final Slot s : inventorySlots )
+		for ( final Slot s : slots )
 		{
 			if ( !( s instanceof SlotColoredBlockCrafter ) )
 			{
-				if ( !s.getHasStack() )
+				if ( !s.hasItem() )
 				{
 					emptySlots++;
 				}
@@ -85,13 +99,13 @@ public class ContainerColoredBlockCrafter extends Container
 
 		if ( emptySlots > 0 )
 		{
-			final Slot s = inventorySlots.get( index );
+			final Slot s = slots.get( index );
 			if ( s instanceof SlotColoredBlockCrafter )
 			{
-				final ItemStack which = s.getStack();
+				final ItemStack which = s.getItem();
 				final ItemStack out = craftinginv.craftItem( which, 64, false );
 
-				mergeItemStack( out, 7 * 9, inventorySlots.size(), true );
+				moveItemStackTo( out, 7 * 9, slots.size(), true );
 			}
 		}
 
@@ -102,18 +116,17 @@ public class ContainerColoredBlockCrafter extends Container
 	float originalScroll = 0;
 
 	public void setScroll(
-			final float currentScroll )
-	{
+			final float currentScroll ) throws IOException {
 		scrollPercent = currentScroll;
 
-		final int rowsOfScrolling = Math.max( ( craftinginv.getSizeInventory() + 8 ) / 9 - 7, 0 );
+		final int rowsOfScrolling = Math.max( ( craftinginv.getContainerSize() + 8 ) / 9 - 7, 0 );
 		craftinginv.offset = Math.round( rowsOfScrolling * currentScroll ) * 9;
 
 		if ( Math.abs( originalScroll - currentScroll ) > 0.00001 )
 		{
-			if ( thePlayer.world.isRemote )
+			if ( thePlayer.level.isClientSide )
 			{
-				final ScrolingGuiPacket sgp = new ScrolingGuiPacket();
+				final ScrolingGuiPacket sgp = new ScrolingGuiPacket(PacketByteBufs.empty());
 				originalScroll = sgp.scroll = scrollPercent;
 
 				// send...
@@ -124,13 +137,23 @@ public class ContainerColoredBlockCrafter extends Container
 
 	public int getItemCount()
 	{
-		return craftinginv.getSizeInventory();
+		return craftinginv.getContainerSize();
 	}
 
-	@OnlyIn( Dist.CLIENT )
+	@Environment(EnvType.CLIENT)
 	public static Object getGuiClass()
 	{
 		return GuiColoredBlockCrafter.class;
 	}
 
+	@Override
+	public Component getDisplayName() {
+		return null;
+	}
+
+	@Nullable
+	@Override
+	public AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
+		return this;
+	}
 }
