@@ -113,7 +113,7 @@ public class ClientSide implements ClientModInitializer
 	public ResourceLocation getTextureResourceLocation(
 			final EnumFlatBlockType type )
 	{
-		return new ResourceLocation( FlatColoredBlocks.MODID, "textures/blocks/flatcoloredblock_" + getTextureFileFor( type ) + ".png" );
+		return new ResourceLocation( FlatColoredBlocks.MODID, "blocks/flatcoloredblock_" + getTextureFileFor( type ) );
 	}
 
 	private String getTextureFileFor(

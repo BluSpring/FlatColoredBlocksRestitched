@@ -123,7 +123,7 @@ public class FlatColoredBlocks implements ModInitializer
 	public void items(
 			Registry<Item> registry )
 	{
-		ItemColoredBlockCrafter icbc = FlatColoredBlocks.instance.itemColoredBlockCrafting = new ItemColoredBlockCrafter();
+		//ItemColoredBlockCrafter icbc = FlatColoredBlocks.instance.itemColoredBlockCrafting = new ItemColoredBlockCrafter();
 
 		//Registry.register(registry, icbc.getRegistryName(), icbc);
 

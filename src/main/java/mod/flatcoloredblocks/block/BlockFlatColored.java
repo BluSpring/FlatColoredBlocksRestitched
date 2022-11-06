@@ -10,7 +10,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -115,17 +117,29 @@ public class BlockFlatColored extends Block implements RegistryItem
 		return shade;
 	}
 
+	public static BlockBehaviour.Properties getProperties(float opacity, float lightValue) {
+		var properties = Block.Properties
+				.copy(opacity > 0.001 ? Blocks.GLASS : Blocks.STONE)
+				.strength( 1.5F, 10.0F )
+				.lightLevel((p) -> (int) ( FlatColoredBlocks.instance.config.GLOWING_EMITS_LIGHT ? Math.max( 0, Math.min( 15, 15.0f * ( lightValue / 255.0f ) ) ) : 0 ))
+				.sound( opacity > 0.001 ? SoundType.GLASS : SoundType.STONE )
+				.color(MaterialColor.SNOW);
+
+		if (opacity > 0.001)
+			return properties.noOcclusion();
+		else
+			return properties;
+	}
+
 	protected BlockFlatColored(
 			BlockHSVConfiguration type,
 			final float lightValue,
 			final float opacity,
 			final int varientNum )
 	{
-		super( Block.Properties.of( opacity > 0.001 ? Material.GLASS : Material.STONE )
-				.strength( 1.5F, 10.0F )
-				.lightLevel((p) -> (int) ( FlatColoredBlocks.instance.config.GLOWING_EMITS_LIGHT ? Math.max( 0, Math.min( 15, 15.0f * ( lightValue / 255.0f ) ) ) : 0 ))
-				.sound( opacity > 0.001 ? SoundType.GLASS : SoundType.STONE )
-				.color(MaterialColor.SNOW) );
+		super(
+				getProperties(opacity, lightValue)
+		);
 
 		final String regName = type.getBlockName( varientNum );
 

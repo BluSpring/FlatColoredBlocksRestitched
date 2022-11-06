@@ -25,7 +25,7 @@ public class ResourceGenerator
 	public void init()
 	{
 		// ARRP is a godsend
-		RRPCallback.AFTER_VANILLA.register(a -> {
+		RRPCallback.BEFORE_VANILLA.register(a -> {
 			populateResources();
 			a.add(resourcePack);
 		});
@@ -57,7 +57,7 @@ public class ResourceGenerator
 
 				try
 				{
-					final URL iresource = ResourceGenerator.class.getResource("/assets/" + sourceLoc.getNamespace() + "/" + sourceLoc.getPath());
+					final URL iresource = ResourceGenerator.class.getResource("/assets/" + sourceLoc.getNamespace() + "/textures/" + sourceLoc.getPath() + ".png");
 					final NativeImage bi = NativeImage.read( iresource.openStream() );
 
 					final BufferedImage image = new BufferedImage( bi.getWidth(), bi.getHeight(), BufferedImage.TYPE_4BYTE_ABGR );
@@ -75,7 +75,7 @@ public class ResourceGenerator
 						}
 					}
 
-					resourcePack.addTexture(new ResourceLocation(FlatColoredBlocks.MODID, "blocks/" + textureName.getPath()), image);
+					resourcePack.addTexture(textureName, image);
 				}
 				catch ( IOException e )
 				{
@@ -86,8 +86,8 @@ public class ResourceGenerator
 						 .model("flatcoloredblocks:block/flatcoloredblock_" + config.textureStyle)
 						 .textures(
 								 JModel.textures()
-										 .var("all", "flatcoloredblocks:blocks/" + textureName.getPath())
-										 .particle("flatcoloredblocks:blocks/" + textureName.getPath())
+										 .var("all", textureName.toString())
+										 .particle(textureName.toString())
 						 );
 
 				resourcePack.addModel(model, new ResourceLocation(FlatColoredBlocks.MODID, "block/" + name));

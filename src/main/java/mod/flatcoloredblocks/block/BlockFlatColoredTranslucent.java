@@ -2,7 +2,9 @@ package mod.flatcoloredblocks.block;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -28,14 +30,7 @@ public class BlockFlatColoredTranslucent extends BlockFlatColored
 			BlockState adjacentBlockState,
 			Direction side )
 	{
-		final Block block = adjacentBlockState.getBlock();
-
-		if ( block instanceof BlockFlatColoredTranslucent )
-		{
-			return true;
-		}
-
-		return super.skipRendering( state, adjacentBlockState, side );
+		return adjacentBlockState.is(this) || super.skipRendering(state, adjacentBlockState, side);
 	}
 
 	/*@Override
@@ -62,5 +57,10 @@ public class BlockFlatColoredTranslucent extends BlockFlatColored
 			int i )
 	{
 		return Math.max( 0.0f, Math.min( 1.0f, (float) i / 255.0f ) );
+	}
+
+	@Override
+	public float getShadeBrightness(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+		return 1.0F;
 	}
 }
