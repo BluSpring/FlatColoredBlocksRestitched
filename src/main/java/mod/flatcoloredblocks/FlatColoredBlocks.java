@@ -8,11 +8,13 @@ import mod.flatcoloredblocks.config.ModConfig;
 import mod.flatcoloredblocks.craftingitem.ContainerColoredBlockCrafter;
 import mod.flatcoloredblocks.craftingitem.GuiColoredBlockCrafter;
 import mod.flatcoloredblocks.craftingitem.ItemColoredBlockCrafter;
+import mod.flatcoloredblocks.datafixer.forge.LegacyForgeBlockParser;
 import mod.flatcoloredblocks.network.NetworkRouter;
 import net.devtech.arrp.api.RRPCallback;
 import net.devtech.arrp.api.RuntimeResourcePack;
 import net.devtech.arrp.json.tags.JTag;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
@@ -32,6 +34,8 @@ public class FlatColoredBlocks implements ModInitializer
 {
 	// create creative tab...
 	public static FlatColoredBlocks instance;
+
+	public static LegacyForgeBlockParser legacyForgeBlockParser;
 
 	public static final String MODID = "flatcoloredblocks";
 
@@ -74,6 +78,10 @@ public class FlatColoredBlocks implements ModInitializer
 
 		registerDyeTags();
 		RRPCallback.BEFORE_VANILLA.register(a -> a.add(resourcePack));
+
+		ServerWorldEvents.UNLOAD.register((ignored, ignored2) -> {
+			legacyForgeBlockParser = null;
+		});
 	}
 
 	private void registerDyeTags() {

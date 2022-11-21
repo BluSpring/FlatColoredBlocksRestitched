@@ -9,6 +9,10 @@ archivesBaseName = 'flatcoloredblocksrestitched'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '17' // Need this here so eclipse task generates correctly.
 
+loom {
+    accessWidenerPath = file('src/main/resources/flatcoloredblocks.accesswidener')
+}
+
 repositories {
     maven {
         url = uri("https://storage.googleapis.com/devan-maven/")
