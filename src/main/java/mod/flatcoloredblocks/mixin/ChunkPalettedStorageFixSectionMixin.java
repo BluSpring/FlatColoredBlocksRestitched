@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.nio.ByteBuffer;
 
 @Mixin(targets = "net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix$Section")
-public abstract class ChunkPalettedStorageFixMixin {
+public abstract class ChunkPalettedStorageFixSectionMixin {
     private static boolean hasMapped = false;
 
     @Shadow public abstract void setBlock(int i, Dynamic<?> dynamic);
@@ -40,16 +40,17 @@ public abstract class ChunkPalettedStorageFixMixin {
             int l = j >> 8 & 15;
             int m = j >> 4 & 15;
 
-            var legacyId = ((byteBuffer.get(j) & 255) << 4) + (dataLayer2.get(k, l, m) << 8);
+            var legacyId = ((byteBuffer.get(j) & 255)) + (dataLayer2.get(k, l, m) << 8);
+
             try {
                 var legacyFcbName = FlatColoredBlocks.legacyForgeBlockParser.legacyIdsToString[legacyId];
 
-                if (legacyFcbName != null) {
+                if (legacyFcbName != null && legacyFcbName.startsWith("flatcoloredblocks:")) {
                     var metadata = dataLayer.get(k, l, m);
 
                     var name = legacyFcbName.contains("transparent0_") ?
                             "flatcoloredblocks:flatcoloredblock_transparent_127" :
-                            legacyFcbName.contains("glowing") ?
+                            legacyFcbName.contains("glowing0_") ?
                                     "flatcoloredblocks:flatcoloredblock_glowing_255" :
                                     "flatcoloredblocks:flatcoloredblock";
 
@@ -60,7 +61,8 @@ public abstract class ChunkPalettedStorageFixMixin {
 
                     var offset = Integer.parseInt(oldMetadataWorkaround) * 16;
 
-                    this.setBlock(j, BlockStateData.parse("{Name:'" + name + "',Properties:{shade:'" + (offset + metadata) + "'}}"));
+                    var parsed = BlockStateData.parse("{Name:'" + name + "',Properties:{shade:'" + (offset + metadata) + "'}}");
+                    this.setBlock(j, parsed);
 
                     continue;
                 }
@@ -70,6 +72,7 @@ public abstract class ChunkPalettedStorageFixMixin {
             }
 
             int n = dataLayer2.get(k, l, m) << 12 | (byteBuffer.get(j) & 255) << 4 | dataLayer.get(k, l, m);
+
             if (ChunkPalettedStorageFixAccessor.getFIX().get(n >> 4)) {
                 this.addFix(n >> 4, j);
             }

@@ -1,5 +1,6 @@
 package mod.flatcoloredblocks.mixin;
 
+import com.mojang.serialization.Dynamic;
 import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -15,6 +16,11 @@ public interface ChunkPalettedStorageFixAccessor {
 
     @Accessor
     static BitSet getFIX() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Accessor
+    static Dynamic<?> getAIR() {
         throw new UnsupportedOperationException();
     }
 }

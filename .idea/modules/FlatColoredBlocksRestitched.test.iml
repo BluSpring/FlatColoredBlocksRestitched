@@ -12,10 +12,6 @@
     </facet>
   </component>
   <component name="McpModuleSettings">
-    <option name="mappingFile" value="H:\BluSpringStudios\Dev\Minecraft\Mods\Fabric\FlatColoredBlocksRestitched\build\createMcpToSrg\output.tsrg" />
-    <option name="mcpVersion" value="snapshot_20180921-1.13" />
-    <option name="minecraftVersion" value="1.13.2" />
-    <option name="platformVersion" value="25.0.22" />
-    <option name="srgType" value="TSRG" />
+    <option name="srgType" value="SRG" />
   </component>
 </module>
