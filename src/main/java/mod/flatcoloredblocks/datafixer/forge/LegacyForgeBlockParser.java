@@ -1,6 +1,7 @@
 package mod.flatcoloredblocks.datafixer.forge;
 
 import mod.flatcoloredblocks.datafixer.LegacyFCBBlockFix;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,11 @@ public class LegacyForgeBlockParser {
                     // Only add the FCB-related blocks
                     if (key.startsWith("flatcoloredblocks:"))
                         legacyIdsToString[value] = key;
+
+                    // B&C support, need to convert legacy C&B format to B&C
+                    if (FabricLoader.getInstance().isModLoaded("bitsandchisels") && key.startsWith("chiselsandbits:")) {
+                        legacyIdsToString[value] = key;
+                    }
                 }
 
                 @Override

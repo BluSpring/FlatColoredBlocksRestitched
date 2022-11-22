@@ -19,6 +19,12 @@ repositories {
         // for 0.4.2 and older
         // url uri("https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master/")
     }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 dependencies {
@@ -29,6 +35,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation("net.devtech:arrp:0.6.4")
+    modRuntimeOnly "curse.maven:bits-and-chisels-420709:3841599"
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

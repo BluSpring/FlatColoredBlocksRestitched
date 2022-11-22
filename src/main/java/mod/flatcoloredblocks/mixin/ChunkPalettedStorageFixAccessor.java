@@ -18,9 +18,4 @@ public interface ChunkPalettedStorageFixAccessor {
     static BitSet getFIX() {
         throw new UnsupportedOperationException();
     }
-
-    @Accessor
-    static Dynamic<?> getAIR() {
-        throw new UnsupportedOperationException();
-    }
 }
