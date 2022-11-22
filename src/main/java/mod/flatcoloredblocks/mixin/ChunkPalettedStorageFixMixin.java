@@ -22,8 +22,6 @@ public abstract class ChunkPalettedStorageFixMixin {
 
     @Shadow public abstract void setBlock(int i, Dynamic<?> dynamic);
 
-    @Shadow @Final private int[] buffer;
-
     @Shadow protected abstract void addFix(int i, int j);
 
     @Shadow @Final
@@ -66,7 +64,10 @@ public abstract class ChunkPalettedStorageFixMixin {
 
                     continue;
                 }
-            } catch (Exception ignored) {}
+            } catch (ArrayIndexOutOfBoundsException ignored) {
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             int n = dataLayer2.get(k, l, m) << 12 | (byteBuffer.get(j) & 255) << 4 | dataLayer.get(k, l, m);
             if (ChunkPalettedStorageFixAccessor.getFIX().get(n >> 4)) {
