@@ -5,42 +5,28 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.Map;
 
 // Mostly from https://github.com/ChiselsAndBits/Chisels-and-Bits/blob/1d7309e06dec869d12e97e648133b57f6e91f067/src/main/java/mod/chiselsandbits/chiseledblock/serialization/BlobSerializer.java
 // but modified to only use the reads
 public class CB2BCConverter {
-    public static int[] loadCBLegacy(FriendlyByteBuf byteBuf) {
+    public static CompactBitsFormat loadCBLegacy(FriendlyByteBuf byteBuf) {
         var version = byteBuf.readVarInt();
 
         CompactBitsFormat bitsFormat;
 
         if (version == 0) { // Compact format
-            bitsFormat = convertCompact(byteBuf);
+            bitsFormat = loadCompact(byteBuf);
         } else {
             throw new RuntimeException("Unsupported version " + version + "!");
         }
 
-        var offset = byteBuf.readVarInt();
-        var interestBytes = byteBuf.readVarInt();
+        bitsFormat.loadBlocks(byteBuf);
 
-        var bits = BitStream.valueOf(offset, ByteBuffer.wrap(byteBuf.array(), byteBuf.readerIndex(), interestBytes));
-
-        var values = new int[16 * 16 * 16];
-
-        for (var x = 0; x < (16 * 16 * 16); x++) {
-            var index = 0;
-
-            for (var y = (bitsFormat.bitsPerInt - 1); y >= 0; --y) {
-                index |= bits.get() ? 1 << y : 0;
-            }
-
-            values[x] = bitsFormat.palette[index];
-        }
-
-        return values;
+        return bitsFormat;
     }
 
-    public static CompactBitsFormat convertCompact(FriendlyByteBuf byteBuf) {
+    public static CompactBitsFormat loadCompact(FriendlyByteBuf byteBuf) {
         var types = byteBuf.readVarInt();
         var palette = new int[types];
 
@@ -171,9 +157,50 @@ public class CB2BCConverter {
         }
     }
 
-    record CompactBitsFormat(
-            int types,
-            int[] palette,
-            int bitsPerInt
-    ) {}
+    public static class CompactBitsFormat {
+        public int types;
+        public int[] palette;
+        public int bitsPerInt;
+
+        public int[] blocks;
+
+        public CompactBitsFormat(
+                int types,
+                int[] palette,
+                int bitsPerInt
+        ) {
+            this.types = types;
+            this.palette = palette;
+            this.bitsPerInt = bitsPerInt;
+        }
+
+        public void loadBlocks(FriendlyByteBuf byteBuf) {
+            var offset = byteBuf.readVarInt();
+            var interestBytes = byteBuf.readVarInt();
+
+            var bits = BitStream.valueOf(offset, ByteBuffer.wrap(byteBuf.array(), byteBuf.readerIndex(), interestBytes));
+
+            var values = new int[16 * 16 * 16];
+
+            for (var x = 0; x < (16 * 16 * 16); x++) {
+                var index = 0;
+
+                for (var y = (bitsPerInt - 1); y >= 0; --y) {
+                    index |= bits.get() ? 1 << y : 0;
+                }
+
+                values[x] = palette[index];
+            }
+
+            this.blocks = values;
+        }
+
+        public int getLegacyIdFromStateId(int id) {
+            return id & 4095;
+        }
+
+        public int getMetadataFromStateId(int id) {
+            return id >> 12 & 15;
+        }
+    }
 }

@@ -9,6 +9,7 @@
     "BeaconBlockEntityMixin",
     "ChunkPalettedStorageFixAccessor",
     "ChunkPalettedStorageFixSectionMixin",
+    "ChunkPalettedStorageFixUpgradeChunkMixin",
     "LevelStorageSourceMixin",
     "MinecraftAccessor"
   ],
