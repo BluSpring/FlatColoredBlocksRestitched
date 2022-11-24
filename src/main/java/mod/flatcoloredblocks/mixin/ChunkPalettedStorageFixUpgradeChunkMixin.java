@@ -83,11 +83,17 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
 
                     var legacyFcbName = FlatColoredBlocks.legacyForgeBlockParser.legacyIdsToString[blockId];
 
+                    var z = (i >> 8) & 15;
+                    var y = (i >> 4) & 15;
+                    var x = i & 15;
+
+                    var pos = ((x << 8) | (y << 4) | z) * 2;
+
                     if (seen.containsKey(stateId)) {
                         var index = seen.get(stateId).shortValue();
 
-                        blocks[(i * 2)] = (byte) (index & 0xff);
-                        blocks[(i * 2) + 1] = (byte) ((index >> 8) & 0xff);
+                        blocks[pos] = (byte) (index & 0xff);
+                        blocks[pos + 1] = (byte) ((index >> 8) & 0xff);
 
                         continue;
                     }
@@ -112,8 +118,8 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                     }
 
                     seen.put(stateId, palette.size() - 1);
-                    blocks[i * 2] = (byte) ((palette.size() - 1) & 0xff);
-                    blocks[(i * 2) + 1] = (byte) (((palette.size() - 1) >> 8) & 0xff);
+                    blocks[pos] = (byte) ((palette.size() - 1) & 0xff);
+                    blocks[pos + 1] = (byte) (((palette.size() - 1) >> 8) & 0xff);
                 }
 
                 blockEntity = blockEntity.remove("X");
