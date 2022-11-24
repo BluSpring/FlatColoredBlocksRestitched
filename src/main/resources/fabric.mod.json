@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "flatcoloredblocksfabric",
-  "version": "${file.jarVersion}",
+  "version": "${version}",
   "name": "Flat Colored Blocks Restitched",
   "description": "A mod that generates a selection of simple colored blocks, transparent blocks, and glowing blocks ( all configurable ) for use in building and creative projects.",
   "authors": [
