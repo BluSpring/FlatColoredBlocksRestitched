@@ -99,7 +99,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                     }
 
                     if (legacyFcbName == null) { // Probably a Minecraft block
-                        palette.add(BlockStateData.getTag(stateId));
+                        palette.add(BlockStateData.getTag(((blockId & 255) << 4) | metadata));
                     } else { // Very likely to be Flat Colored Blocks
                         var name = legacyFcbName.contains("transparent0_") ?
                                 "flatcoloredblocks:flatcoloredblock_transparent_127" :
