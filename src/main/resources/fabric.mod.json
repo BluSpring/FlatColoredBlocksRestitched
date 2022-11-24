@@ -28,5 +28,8 @@
     "fabric": "*",
     "minecraft": ">=1.19",
     "advanced_runtime_resource_pack": "*"
+  },
+  "suggests": {
+    "bitsandchisels": "*"
   }
 }
