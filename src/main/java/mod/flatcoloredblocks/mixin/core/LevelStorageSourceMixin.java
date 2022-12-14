@@ -1,4 +1,4 @@
-package mod.flatcoloredblocks.mixin;
+package mod.flatcoloredblocks.mixin.core;
 
 import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.DynamicOps;

@@ -1,4 +1,4 @@
-package mod.flatcoloredblocks.mixin;
+package mod.flatcoloredblocks.mixin.core;
 
 import mod.flatcoloredblocks.block.BlockFlatColoredTranslucent;
 import net.minecraft.core.BlockPos;

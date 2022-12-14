@@ -1,4 +1,4 @@
-package mod.flatcoloredblocks.mixin;
+package mod.flatcoloredblocks.mixin.core;
 
 import com.mojang.serialization.Dynamic;
 import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;

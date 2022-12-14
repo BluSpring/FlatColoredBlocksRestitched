@@ -1,4 +1,4 @@
-package mod.flatcoloredblocks.mixin;
+package mod.flatcoloredblocks.mixin.core;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemColors;

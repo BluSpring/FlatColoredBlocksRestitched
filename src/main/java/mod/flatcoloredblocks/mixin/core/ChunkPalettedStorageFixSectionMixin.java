@@ -1,4 +1,4 @@
-package mod.flatcoloredblocks.mixin;
+package mod.flatcoloredblocks.mixin.core;
 
 import com.mojang.serialization.Dynamic;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -82,9 +82,7 @@ public abstract class ChunkPalettedStorageFixSectionMixin implements ExtendedChu
                 if (
                         legacyFcbName != null
                                 && legacyFcbName.startsWith("chiselsandbits:")
-                                && FabricLoader.getInstance().isModLoaded("bitsandchisels")
-                ) { // Convert Chisels and Bits to Bits and Chisels
-                    var blockName = "bitsandchisels:bits_block";
+                ) { // Convert Chisels and Bits 1.12
                     // This is a formula I had managed to come up with at school
                     // that gets the index based off of XYZ positions.
                     // This is not to be used directly for the B&C format, as it may
@@ -97,8 +95,17 @@ public abstract class ChunkPalettedStorageFixSectionMixin implements ExtendedChu
                     if (blockEntity == null) // Double check to make sure it actually exists.
                         continue;
 
-                    var parsed = BlockStateData.parse("{Name:'" + blockName + "',Properties:{light_level:'" + blockEntity.lightLevel() + "',waterlogged:'false'}}");
-                    this.setBlock(j, parsed);
+                    if (FabricLoader.getInstance().isModLoaded("bitsandchisels")) { // to Bits and Chisels
+                        var blockName = "bitsandchisels:bits_block";
+
+                        var parsed = BlockStateData.parse("{Name:'" + blockName + "',Properties:{light_level:'" + blockEntity.lightLevel() + "',waterlogged:'false'}}");
+                        this.setBlock(j, parsed);
+                    } else if (FabricLoader.getInstance().isModLoaded("chiselsandbits")) { // to Chisels and Bits 1.19
+                        var blockName = "chiselsandbits:chiseledrock";
+
+                        var parsed = BlockStateData.parse("{Name:'" + blockName + "'");
+                        this.setBlock(j, parsed);
+                    }
 
                     continue;
                 } else if (legacyFcbName != null && legacyFcbName.startsWith("flatcoloredblocks:")) {
