@@ -46,10 +46,10 @@ dependencies {
     // Bits & Chisels testing
     //modRuntimeOnly "curse.maven:bits-and-chisels-420709:3841599"
 
-    // Chisels & Bits testing
+    // Chisels & Bits conversion
     modImplementation (name: 'chisels-and-bits-fabric-1.3.122', ext: 'jar')
-    modRuntimeOnly (name: 'scena-fabric-1.0.84', ext: 'jar')
-    modRuntimeOnly (name: 'saecularia-caudices-fabric-1.0.11', ext: 'jar')
+    modImplementation (name: 'scena-fabric-1.0.84', ext: 'jar')
+    modImplementation (name: 'saecularia-caudices-fabric-1.0.11', ext: 'jar')
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

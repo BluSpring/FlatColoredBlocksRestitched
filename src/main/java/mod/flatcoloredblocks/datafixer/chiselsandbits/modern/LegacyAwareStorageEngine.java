@@ -14,11 +14,11 @@ import java.util.concurrent.Executor;
 
 public class LegacyAwareStorageEngine implements IThreadAwareStorageEngine {
     private final LegacyVersionedStorageEngine legacyVersionedStorageEngine;
-    private final VersionedStorageEngine versionedStorageEngine;
+    private final IThreadAwareStorageEngine versionedStorageEngine;
 
     private final Collection<IStorageHandler<?>> handlers;
 
-    public LegacyAwareStorageEngine(final LegacyVersionedStorageEngine legacyVersionedStorageEngine, final VersionedStorageEngine versionedStorageEngine) {
+    public LegacyAwareStorageEngine(final LegacyVersionedStorageEngine legacyVersionedStorageEngine, final IThreadAwareStorageEngine versionedStorageEngine) {
         this.legacyVersionedStorageEngine = legacyVersionedStorageEngine;
         this.versionedStorageEngine = versionedStorageEngine;
 
@@ -65,36 +65,13 @@ public class LegacyAwareStorageEngine implements IThreadAwareStorageEngine {
     }
 
     @Override
-    public Collection<? extends IStorageHandler> getHandlers()
+    public Collection<? extends IStorageHandler<?>> getHandlers()
     {
         return handlers;
     }
 
-    public HandlerWithData getThreadAwareStorageHandler(CompoundTag tag) {
-        if (tag.contains(NbtConstants.VERSION)) {
-            //This is considered a versioned implementation.
-            return versionedStorageEngine.getThreadAwareStorageHandler(tag);
-        }
-
-        return null;
-    }
-
     @Override
     public CompletableFuture<Void> deserializeOffThread(CompoundTag compoundTag, Executor ioExecutor, Executor gameExecutor) {
-        var handlerData = getThreadAwareStorageHandler(compoundTag);
-
-        if (handlerData == null)
-            return CompletableFuture.completedFuture(null);
-
-        var handler = handlerData.handler();
-
-        return doDeserializeOffThread(handler, compoundTag, ioExecutor, gameExecutor);
-    }
-
-    private <P> CompletableFuture<Void> doDeserializeOffThread(IStorageHandler<P> handler, CompoundTag tag, Executor ioExecutor, Executor gameExecutor) {
-        return CompletableFuture.supplyAsync(
-                () -> handler.readPayloadOffThread(tag.getCompound(NbtConstants.DATA)),
-                ioExecutor
-        ).thenAcceptAsync(handler::syncPayloadOnGameThread, gameExecutor);
+        return versionedStorageEngine.deserializeOffThread(compoundTag, ioExecutor, gameExecutor);
     }
 }

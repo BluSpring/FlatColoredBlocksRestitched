@@ -14,7 +14,7 @@ public class LegacyVersionedStorageEngine implements IStorageEngine
 {
     private final List<ILegacyStorageHandler> handlers;
 
-    LegacyVersionedStorageEngine(final LinkedList<ILegacyStorageHandler> handlers) {
+    public LegacyVersionedStorageEngine(final LinkedList<ILegacyStorageHandler> handlers) {
         this.handlers = Collections.unmodifiableList(handlers);
     }
 
