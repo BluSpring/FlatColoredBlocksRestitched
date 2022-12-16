@@ -20,4 +20,14 @@ public interface ILegacyStorageHandler extends IStorageHandler<StoragePayload> {
     default CompoundTag serializeNBT() {
         throw new UnsupportedOperationException("Legacy storage does not support serialization.");
     }
+
+    @Override
+    default void syncPayloadOnGameThread(StoragePayload payload) {
+        throw new UnsupportedOperationException("Legacy storage does not support multi-threading.");
+    }
+
+    @Override
+    default StoragePayload readPayloadOffThread(CompoundTag compoundTag) {
+        throw new UnsupportedOperationException("Legacy storage does not support multi-threading.");
+    }
 }

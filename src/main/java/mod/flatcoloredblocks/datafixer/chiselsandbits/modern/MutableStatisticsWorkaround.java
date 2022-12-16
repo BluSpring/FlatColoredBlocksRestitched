@@ -17,9 +17,10 @@ public interface MutableStatisticsWorkaround extends IMultiStateObjectStatistics
     static MutableStatisticsWorkaround create(Supplier<LevelAccessor> worldReaderSupplier, Supplier<BlockPos> positionSupplier) {
         try {
             var mutableStatisticsClass = Class.forName("mod.chiselsandbits.block.entities.ChiseledBlockEntity$MutableStatistics");
-            var mutableStatisticsConstructor = mutableStatisticsClass.getConstructor(Supplier.class, Supplier.class);
+            var mutableStatisticsConstructor = mutableStatisticsClass.getDeclaredConstructors()[0];
+            mutableStatisticsConstructor.setAccessible(true);
             return (MutableStatisticsWorkaround) mutableStatisticsConstructor.newInstance(worldReaderSupplier, positionSupplier);
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+        } catch (ClassNotFoundException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return null;
         }

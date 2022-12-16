@@ -1,23 +1,14 @@
 package mod.flatcoloredblocks.mixin.core;
 
-import com.google.common.math.LongMath;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import com.mojang.serialization.Dynamic;
-import com.mojang.serialization.DynamicOps;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.CB2BCConverter;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.ChiselsAndBitsData;
-import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.CB112To119Converter;
 import mod.flatcoloredblocks.duck.ExtendedChunkPalettedStorageFixSection;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.datafix.fixes.BlockStateData;
 import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
@@ -31,13 +22,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.io.*;
-import java.math.RoundingMode;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.zip.InflaterInputStream;
 
 @Mixin(targets = "net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix$UpgradeChunk")
@@ -60,90 +50,9 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                 if (!dynamic2.get("id").asString("minecraft:air").equals("minecraft:mod.chiselsandbits.tileentitychiseled"))
                     return;
 
-                var buffer = dynamic2.get("X").asByteBuffer();
-
-                var inflater = new InflaterInputStream(new ByteArrayInputStream(buffer.array()));
-                var inflatedBuffer = ByteBuffer.allocate(3145728);
-
-                int usedBytes = 0;
-                int rv = 0;
-
-                do {
-                    usedBytes += rv;
-                    try {
-                        rv = inflater.read(inflatedBuffer.array(), usedBytes, inflatedBuffer.limit() - usedBytes);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                } while (rv > 0);
-
-                var format = CB2BCConverter.loadCBLegacy(new FriendlyByteBuf(Unpooled.wrappedBuffer(inflatedBuffer)));
-
-                var palette = new ArrayList<Dynamic<?>>();
-
-                var seen = new HashMap<Integer, Integer>();
-
-                var size = 16;
-                var blocks = new int[4096];
-
                 var blockEntity = dynamic2;
 
-                for (int i = 0; i < format.blocks.length; i++) {
-                    var stateId = format.blocks[i];
-                    var blockId = format.getLegacyIdFromStateId(stateId);
-                    var metadata = format.getMetadataFromStateId(stateId);
-
-                    var legacyFcbName = FlatColoredBlocks.legacyForgeBlockParser.legacyIdsToString[blockId];
-
-                    var z = (i >> 8) & 15;
-                    var y = (i >> 4) & 15;
-                    var x = i & 15;
-
-                    var pos = x * size * size + y * size + z;
-
-                    if (seen.containsKey(stateId)) {
-                        var paletteIndex = seen.get(stateId);
-                        blocks[pos] = paletteIndex;
-                    } else {
-                        if (legacyFcbName == null) { // Probably a Minecraft block
-                            var value = BlockStateData.getTag(((blockId & 255) << 4) | metadata);
-
-                            palette.add(value);
-                        } else { // Very likely to be Flat Colored Blocks
-                            var name = legacyFcbName.contains("transparent0_") ?
-                                    "flatcoloredblocks:flatcoloredblock_transparent_127" :
-                                    legacyFcbName.contains("glowing0_") ?
-                                            "flatcoloredblocks:flatcoloredblock_glowing_255" :
-                                            "flatcoloredblocks:flatcoloredblock";
-
-                            var oldMetadataWorkaround = legacyFcbName
-                                    .replace("flatcoloredblocks:flatcoloredblock", "")
-                                    .replace("_transparent0_", "")
-                                    .replace("_glowing0_", "");
-
-                            var offset = Integer.parseInt(oldMetadataWorkaround) * 16;
-
-                            var tag = "{Name:'" + name + "',Properties:{shade:'" + (offset + metadata) + "'}}";
-                            palette.add(BlockStateData.parse(tag));
-                        }
-
-                        seen.put(stateId, palette.size() - 1);
-                        blocks[pos] = (palette.size() - 1);
-                    }
-                }
-
-                blockEntity = blockEntity.remove("X");
-                blockEntity = blockEntity.remove("s");
-                blockEntity = blockEntity.remove("nc");
-                blockEntity = blockEntity.remove("b");
-
                 blockEntity = blockEntity.set("id", blockEntity.createString("chiselsandbits:chiseled"));
-                blockEntity = blockEntity.set("version", blockEntity.createInt(0));
-                blockEntity = blockEntity.set("keepPacked", blockEntity.createBoolean(false));
-
-                var compressedDataDynamic = CB112To119Converter.convert(palette, blocks, blockEntity.get("lv").asInt(0));
-
-                blockEntity = blockEntity.set("data", compressedDataDynamic);
 
                 var bX = blockEntity.get("x").asInt(0);
                 var bY = blockEntity.get("y").asInt(0);
@@ -162,25 +71,6 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                                 blockEntity.get("lv").asInt(0)
                         )
                 );
-
-                blockEntity = blockEntity.remove("lv");
-
-                try {
-                    var file = new File(FabricLoader.getInstance().getGameDir().toFile(), "dump/" + bX + "." + bY + "." + bZ + ".nbt");
-                    if (!file.exists())
-                        file.createNewFile();
-
-                    var fileOutputStream = new FileOutputStream(file);
-                    var dataOutputStream = new DataOutputStream(fileOutputStream);
-
-                    var value = (CompoundTag) blockEntity.getValue();
-
-                    value.write(dataOutputStream);
-                    dataOutputStream.close();
-                    fileOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
                 this.blockEntities.put(l, blockEntity);
             });

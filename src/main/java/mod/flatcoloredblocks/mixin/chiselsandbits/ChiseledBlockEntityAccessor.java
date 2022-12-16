@@ -16,6 +16,6 @@ public interface ChiseledBlockEntityAccessor {
     @Accessor(remap = false)
     void setStorage(IStateEntryStorage storage);
 
-    @Accessor
+    @Accessor(remap = false)
     void setIsInitialized(boolean isInitialized);
 }

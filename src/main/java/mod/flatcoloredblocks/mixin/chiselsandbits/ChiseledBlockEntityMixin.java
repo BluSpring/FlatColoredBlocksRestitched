@@ -1,7 +1,6 @@
 package mod.flatcoloredblocks.mixin.chiselsandbits;
 
 import mod.chiselsandbits.block.entities.ChiseledBlockEntity;
-import mod.chiselsandbits.storage.IMultiThreadedStorageEngine;
 import mod.chiselsandbits.storage.IStorageHandler;
 import mod.chiselsandbits.storage.StorageEngineBuilder;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.ExtendedChiseledBlockEntity;
@@ -10,14 +9,11 @@ import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.MutableStatisticsWo
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.handlers.LegacyBitStreamBasedStorageHandler;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.handlers.LegacyChunkSectionBasedStorageHandler;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = ChiseledBlockEntity.class, remap = false)
 public class ChiseledBlockEntityMixin implements ExtendedChiseledBlockEntity {
-    @Shadow private IMultiThreadedStorageEngine storageEngine;
-
     @Override
     public void setMutableStatistics(MutableStatisticsWorkaround statistics) {
         try {

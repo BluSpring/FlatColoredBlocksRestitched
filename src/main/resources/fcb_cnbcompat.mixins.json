@@ -7,6 +7,8 @@
   "mixins": [
     "ChiseledBlockEntityAccessor",
     "ChiseledBlockEntityMixin",
+    "MutableStatisticsAccessor",
+    "MutableStatisticsMixin",
     "StorageEngineBuilderMixin"
   ],
   "client": [

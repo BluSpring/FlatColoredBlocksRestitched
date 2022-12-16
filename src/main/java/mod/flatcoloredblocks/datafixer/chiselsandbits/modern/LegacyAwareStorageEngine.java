@@ -72,6 +72,12 @@ public class LegacyAwareStorageEngine implements IThreadAwareStorageEngine {
 
     @Override
     public CompletableFuture<Void> deserializeOffThread(CompoundTag compoundTag, Executor ioExecutor, Executor gameExecutor) {
-        return versionedStorageEngine.deserializeOffThread(compoundTag, ioExecutor, gameExecutor);
+        if (compoundTag.contains(NbtConstants.VERSION)) {
+            //This is considered a versioned implementation.
+            return versionedStorageEngine.deserializeOffThread(compoundTag, ioExecutor, gameExecutor);
+        }
+
+        legacyVersionedStorageEngine.deserializeNBT(compoundTag);
+        return CompletableFuture.completedFuture(null);
     }
 }
