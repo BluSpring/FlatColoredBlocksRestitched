@@ -52,7 +52,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
 
                 var blockEntity = dynamic2;
 
-                blockEntity = blockEntity.set("id", blockEntity.createString("chiselsandbits:chiseled"));
+                blockEntity = blockEntity.set("id", blockEntity.createString("flatcoloredblocks:legacy_chiseled_block_entity"));
 
                 var bX = blockEntity.get("x").asInt(0);
                 var bY = blockEntity.get("y").asInt(0);
@@ -87,22 +87,8 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                 if (!dynamic2.get("id").asString("minecraft:air").equals("minecraft:mod.chiselsandbits.tileentitychiseled"))
                     return;
 
-                var buffer = dynamic2.get("X").asByteBuffer();
-
-                var inflater = new InflaterInputStream(new ByteArrayInputStream(buffer.array()));
-                var inflatedBuffer = ByteBuffer.allocate(3145728);
-
-                int usedBytes = 0;
-                int rv = 0;
-
-                do {
-                    usedBytes += rv;
-                    try {
-                        rv = inflater.read(inflatedBuffer.array(), usedBytes, inflatedBuffer.limit() - usedBytes);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                } while (rv > 0);
+                var deflatedBuffer = dynamic2.get("X").asByteBuffer();
+                var inflatedBuffer = CB2BCConverter.inflate(deflatedBuffer);
 
                 var format = CB2BCConverter.loadCBLegacy(new FriendlyByteBuf(Unpooled.wrappedBuffer(inflatedBuffer)));
 
@@ -205,7 +191,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
         if (id.equals("bitsandchisels:bits_block_entity"))
             return null;
 
-        if (id.equals("chiselsandbits:chiseled"))
+        if (id.equals("flatcoloredblocks:legacy_chiseled_block_entity"))
             return null;
 
         return instance.put(i, (Dynamic<?>) o);

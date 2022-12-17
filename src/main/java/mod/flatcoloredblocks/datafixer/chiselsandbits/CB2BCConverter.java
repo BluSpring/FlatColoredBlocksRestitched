@@ -2,10 +2,13 @@ package mod.flatcoloredblocks.datafixer.chiselsandbits;
 
 import net.minecraft.network.FriendlyByteBuf;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Map;
+import java.util.zip.InflaterInputStream;
 
 // Mostly from https://github.com/ChiselsAndBits/Chisels-and-Bits/blob/1d7309e06dec869d12e97e648133b57f6e91f067/src/main/java/mod/chiselsandbits/chiseledblock/serialization/BlobSerializer.java
 // but modified to only use the reads
@@ -24,6 +27,25 @@ public class CB2BCConverter {
         bitsFormat.loadBlocks(byteBuf);
 
         return bitsFormat;
+    }
+
+    public static ByteBuffer inflate(ByteBuffer buffer) {
+        var inflater = new InflaterInputStream(new ByteArrayInputStream(buffer.array()));
+        var inflatedBuffer = ByteBuffer.allocate(3145728);
+
+        int usedBytes = 0;
+        int rv = 0;
+
+        do {
+            usedBytes += rv;
+            try {
+                rv = inflater.read(inflatedBuffer.array(), usedBytes, inflatedBuffer.limit() - usedBytes);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } while (rv > 0);
+
+        return inflatedBuffer;
     }
 
     public static CompactBitsFormat loadCompact(FriendlyByteBuf byteBuf) {

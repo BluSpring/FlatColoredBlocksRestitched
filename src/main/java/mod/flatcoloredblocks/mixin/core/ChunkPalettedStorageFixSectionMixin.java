@@ -101,9 +101,9 @@ public abstract class ChunkPalettedStorageFixSectionMixin implements ExtendedChu
                         var parsed = BlockStateData.parse("{Name:'" + blockName + "',Properties:{light_level:'" + blockEntity.lightLevel() + "',waterlogged:'false'}}");
                         this.setBlock(j, parsed);
                     } else if (FabricLoader.getInstance().isModLoaded("chiselsandbits")) { // to Chisels and Bits 1.19
-                        var blockName = "chiselsandbits:chiseledrock";
+                        var blockName = "flatcoloredblocks:legacy_chiseled_block";
 
-                        var parsed = BlockStateData.parse("{Name:'" + blockName + "'");
+                        var parsed = BlockStateData.parse("{Name:'" + blockName + "'}");
                         this.setBlock(j, parsed);
                     }
 
