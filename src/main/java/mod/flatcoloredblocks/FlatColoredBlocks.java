@@ -4,9 +4,10 @@ import mod.flatcoloredblocks.block.BlockFlatColored;
 import mod.flatcoloredblocks.block.BlockHSVConfiguration;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
 import mod.flatcoloredblocks.block.ItemBlockFlatColored;
+import mod.flatcoloredblocks.block.cnbconvert.LegacyChiseledBlock;
+import mod.flatcoloredblocks.block.cnbconvert.LegacyChiseledBlockEntity;
 import mod.flatcoloredblocks.config.ModConfig;
 import mod.flatcoloredblocks.craftingitem.ContainerColoredBlockCrafter;
-import mod.flatcoloredblocks.craftingitem.GuiColoredBlockCrafter;
 import mod.flatcoloredblocks.craftingitem.ItemColoredBlockCrafter;
 import mod.flatcoloredblocks.datafixer.forge.LegacyForgeBlockParser;
 import mod.flatcoloredblocks.network.NetworkRouter;
@@ -15,6 +16,8 @@ import net.devtech.arrp.api.RuntimeResourcePack;
 import net.devtech.arrp.json.tags.JTag;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
+import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.screenhandler.v1.ScreenHandlerRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
@@ -23,8 +26,9 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -112,12 +116,29 @@ public class FlatColoredBlocks implements ModInitializer
 		glowing = new BlockHSVConfiguration( EnumFlatBlockType.GLOWING, config );
 	}
 
+	public static Block LEGACY_CHISELED_BLOCK = null;
+	public static BlockEntityType<LegacyChiseledBlockEntity> LEGACY_CHISELED_BLOCK_ENTITY = null;
+
 	public static class RegistryEvents
 	{
 		public static void onBlocksRegistry(Registry<Block> registry)
 		{
 			Log.debug( "registering blocks : " + registry.key().registry().toString() );
 			FlatColoredBlocks.instance.blocks(registry);
+
+			if (FabricLoader.getInstance().isModLoaded("chiselsandbits")) {
+				LEGACY_CHISELED_BLOCK = Registry.register(
+						Registry.BLOCK,
+						new ResourceLocation("flatcoloredblocks", "legacy_chiseled_block"),
+						new LegacyChiseledBlock(FabricBlockSettings.copy(Blocks.STONE))
+				);
+
+				LEGACY_CHISELED_BLOCK_ENTITY = Registry.register(
+						Registry.BLOCK_ENTITY_TYPE,
+						new ResourceLocation("flatcoloredblocks", "legacy_chiseled_block_entity"),
+						FabricBlockEntityTypeBuilder.create(LegacyChiseledBlockEntity::new, LEGACY_CHISELED_BLOCK).build()
+				);
+			}
 		}
 
 		public static void onItemsRegistry(Registry<Item> registry)
