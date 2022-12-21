@@ -77,7 +77,12 @@ public class LegacyAwareStorageEngine implements IThreadAwareStorageEngine {
             return versionedStorageEngine.deserializeOffThread(compoundTag, ioExecutor, gameExecutor);
         }
 
-        legacyVersionedStorageEngine.deserializeNBT(compoundTag);
-        return CompletableFuture.completedFuture(null);
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    legacyVersionedStorageEngine.deserializeNBT(compoundTag);
+                    return null;
+                },
+                ioExecutor
+        );
     }
 }

@@ -1,6 +1,5 @@
 package mod.flatcoloredblocks.datafixer.chiselsandbits.modern.handlers;
 
-import mod.chiselsandbits.api.block.entity.IMultiStateBlockEntity;
 import mod.chiselsandbits.api.block.storage.IStateEntryStorage;
 import mod.chiselsandbits.api.util.constants.NbtConstants;
 import mod.chiselsandbits.block.entities.ChiseledBlockEntity;
@@ -16,7 +15,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jetbrains.annotations.NotNull;
 
 public final class LegacyChunkSectionBasedStorageHandler implements ILegacyStorageHandler {
-    private ChiseledBlockEntity blockEntity;
+    private final ChiseledBlockEntity blockEntity;
 
     public LegacyChunkSectionBasedStorageHandler(ChiseledBlockEntity blockEntity) {
         this.blockEntity = blockEntity;

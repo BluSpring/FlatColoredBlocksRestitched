@@ -9,6 +9,8 @@
     "ChiseledBlockEntityMixin",
     "MutableStatisticsAccessor",
     "MutableStatisticsMixin",
+    "SimpleStateEntryStorageAccessor",
+    "SimpleStateEntryStorageMixin",
     "StorageEngineBuilderMixin"
   ],
   "client": [
