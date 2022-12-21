@@ -30,7 +30,12 @@ public class LegacyForgeBlockParser {
                         legacyIdsToString[value] = key;
 
                     // B&C support, need to convert legacy C&B format to B&C
-                    if (FabricLoader.getInstance().isModLoaded("bitsandchisels") && key.startsWith("chiselsandbits:")) {
+                    if (
+                            (
+                                    FabricLoader.getInstance().isModLoaded("bitsandchisels")
+                                    || FabricLoader.getInstance().isModLoaded("chiselsandbits")
+                            ) && key.startsWith("chiselsandbits:")
+                    ) {
                         legacyIdsToString[value] = key;
                     }
                 }

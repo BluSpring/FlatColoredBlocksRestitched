@@ -1,5 +1,6 @@
 package mod.flatcoloredblocks.datafixer.chiselsandbits.modern;
 
+import com.google.common.math.LongMath;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
 import mod.chiselsandbits.block.entities.storage.SimpleStateEntryStorage;
@@ -15,6 +16,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.SimpleBitStorage;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
+import java.math.RoundingMode;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,51 +26,63 @@ public class CB112To119Converter {
     private static final int size = 16;
 
     public static Dynamic<?> convert(List<Dynamic<?>> palette, int[] blocks, int lightLevel) {
-        var storage = new SimpleStateEntryStorage();
-
-        // 1.12 to 1.16 format (LegacyChunkSection)
-        var chunkSection = new LevelChunkSection(0, BuiltinRegistries.BIOME);
         var compound = new CompoundTag();
 
         var paletteList = new ListTag();
         for (Dynamic<?> id : palette) {
+            var additionalStateCompound = new CompoundTag();
             var stateCompound = (CompoundTag) id.getValue();
 
-            paletteList.add(stateCompound);
+            additionalStateCompound.putString("state", stateCompound.getAsString());
+
+            paletteList.add(additionalStateCompound);
         }
 
         compound.put("palette", paletteList);
-        var bitStorage = new SimpleBitStorage(Math.max(4, Mth.ceillog2(palette.size())), 4096);
+
+        var entryWidth = LongMath.log2(paletteList.size(), RoundingMode.CEILING);
+        var requiredSize = (int) (Math.ceil((16 * 16 * 16 * entryWidth) / (float) Byte.SIZE));
+        var bitSet = BitSet.valueOf(new byte[requiredSize]);
 
         for (int i = 0; i < blocks.length; i++) {
-            var pos = calculatePosition(i);
-            var index = (pos.getY() << 4 | pos.getZ()) << 4 | pos.getX();
-            bitStorage.set(index, blocks[i]);
+            var x = (i >> 8) & 15;
+            var y = (i >> 4) & 15;
+            var z = i & 15;
+
+            var pos = x * 16 * 16 + y * 16 + z;
+            var bitOffset = pos * entryWidth;
+
+            bitSet.clear(bitOffset, bitOffset + entryWidth);
+
+            for (int j = 0; j < entryWidth; ++j) {
+                var isSet = ((blocks[i] >> j) & 1) != 0;
+
+                bitSet.set(bitOffset + j, isSet);
+            }
         }
 
-        compound.putLongArray("blockStates", bitStorage.getRaw());
-
-        ChunkSectionUtils.deserializeNBT(chunkSection, compound);
-        storage.loadFromChunkSection(chunkSection);
+        compound.putByteArray("data", bitSet.toByteArray());
 
         // Now we recreate the data
         var nbt = new CompoundTag();
 
-        nbt.put("chiseledData", storage.serializeNBT());
+        nbt.put("chiseledData", compound);
 
         var total = 0;
         CompoundTag primary = null;
 
         for (int paletteIndex : blocks) {
-            var block = storage.getContainedPalette().get(paletteIndex);
+            var block = palette.get(paletteIndex);
 
-            var serializedBlock = block.serializeNBT();
-
-            if (!block.isAir()) {
+            if (!block.get("Name").asString("minecraft:air").equals("minecraft:air")) {
                 total++;
 
-                if (primary == null)
-                    primary = serializedBlock;
+                if (primary == null) {
+                    var additionalState = new CompoundTag();
+                    additionalState.putString("state", ((CompoundTag) block.getValue()).getAsString());
+
+                    primary = additionalState;
+                }
             }
         }
 
