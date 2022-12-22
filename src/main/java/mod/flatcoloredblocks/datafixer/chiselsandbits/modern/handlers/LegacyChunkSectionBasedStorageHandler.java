@@ -1,6 +1,5 @@
 package mod.flatcoloredblocks.datafixer.chiselsandbits.modern.handlers;
 
-import mod.chiselsandbits.api.block.entity.IMultiStateBlockEntity;
 import mod.chiselsandbits.api.block.storage.IStateEntryStorage;
 import mod.chiselsandbits.api.util.constants.NbtConstants;
 import mod.chiselsandbits.block.entities.ChiseledBlockEntity;
@@ -8,14 +7,13 @@ import mod.chiselsandbits.block.entities.storage.SimpleStateEntryStorage;
 import mod.chiselsandbits.utils.ChunkSectionUtils;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.ExtendedChiseledBlockEntity;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.ILegacyStorageHandler;
-import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.MutableStatisticsWorkaround;
 import mod.flatcoloredblocks.mixin.chiselsandbits.ChiseledBlockEntityAccessor;
 import net.minecraft.data.BuiltinRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jetbrains.annotations.NotNull;
 
-public final class LegacyChunkSectionBasedStorageHandler implements ILegacyStorageHandler {
+/*public final class LegacyChunkSectionBasedStorageHandler implements ILegacyStorageHandler {
     private ChiseledBlockEntity blockEntity;
 
     public LegacyChunkSectionBasedStorageHandler(ChiseledBlockEntity blockEntity) {
@@ -78,3 +76,4 @@ public final class LegacyChunkSectionBasedStorageHandler implements ILegacyStora
         ((ChiseledBlockEntityAccessor) blockEntity).setIsInitialized(true);
     }
 }
+*/

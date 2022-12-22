@@ -11,7 +11,6 @@ import mod.flatcoloredblocks.FlatColoredBlocks;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.CB2BCConverter;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.ExtendedChiseledBlockEntity;
 import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.ILegacyStorageHandler;
-import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.MutableStatisticsWorkaround;
 import mod.flatcoloredblocks.mixin.chiselsandbits.ChiseledBlockEntityAccessor;
 import mod.flatcoloredblocks.mixin.chiselsandbits.MutableStatisticsAccessor;
 import net.minecraft.nbt.CompoundTag;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.zip.InflaterInputStream;
 
@@ -39,31 +39,21 @@ public class LegacyBitStreamBasedStorageHandler implements ILegacyStorageHandler
 
     @Override
     public void deserializeNBT(CompoundTag compoundTag) {
-        var mutableStatistics = (MutableStatisticsWorkaround) blockEntity.getStatistics();
+        var mutableStatistics = (MutableStatisticsAccessor) blockEntity.getStatistics();
         var storage = ((ChiseledBlockEntityAccessor) blockEntity).getStorage();
 
         deserializeNBT(compoundTag, mutableStatistics, storage);
     }
 
-    private StoragePayload deserializeNBTWithPayload(CompoundTag compoundTag, MutableStatisticsWorkaround mutableStatistics, IStateEntryStorage storage) {
+    private StoragePayload deserializeNBTWithPayload(CompoundTag compoundTag, MutableStatisticsAccessor mutableStatistics, IStateEntryStorage storage) {
         var byteArray = compoundTag.getByteArray("X");
 
-        var inflater = new InflaterInputStream(new ByteArrayInputStream(byteArray));
-        var inflatedBuffer = ByteBuffer.allocate(3145728);
+        var format = CB2BCConverter.deflateAndLoadCBLegacy(ByteBuffer.wrap(byteArray));
+        var primaryId = compoundTag.getInt("b");
+        IBlockInformation primary = IBlockInformation.AIR;
 
-        int usedBytes = 0;
-        int rv = 0;
-
-        do {
-            usedBytes += rv;
-            try {
-                rv = inflater.read(inflatedBuffer.array(), usedBytes, inflatedBuffer.limit() - usedBytes);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } while (rv > 0);
-
-        var format = CB2BCConverter.loadCBLegacy(new FriendlyByteBuf(Unpooled.wrappedBuffer(inflatedBuffer)));
+        var totalBlocks = 0;
+        var paletteMapping = new HashMap<Integer, IBlockInformation>();
 
         for (int i = 0; i < format.blocks.length; i++) {
             var z = (i >> 8) & 15;
@@ -71,49 +61,72 @@ public class LegacyBitStreamBasedStorageHandler implements ILegacyStorageHandler
             var x = i & 15;
 
             var stateId = format.blocks[i];
-            var blockId = format.getLegacyIdFromStateId(stateId);
-            var metadata = format.getMetadataFromStateId(stateId);
 
-            var legacyFcbName = FlatColoredBlocks.legacyForgeBlockParser.legacyIdsToString[blockId];
-            String serializedBlockState;
+            if (!paletteMapping.containsKey(stateId)) {
+                var blockId = format.getLegacyIdFromStateId(stateId);
+                var metadata = format.getMetadataFromStateId(stateId);
 
-            if (legacyFcbName == null) {
-                var value = BlockStateData.getTag(((blockId & 255) << 4) | metadata);
-                serializedBlockState = ((CompoundTag) value.getValue()).getAsString();
+                var legacyFcbName = FlatColoredBlocks.legacyForgeBlockParser.legacyIdsToString[blockId];
+                String serializedBlockState;
+
+                if (legacyFcbName == null) {
+                    var value = BlockStateData.getTag(((blockId & 255) << 4) | metadata);
+                    serializedBlockState = ((CompoundTag) value.getValue()).getAsString();
+                } else {
+                    var name = legacyFcbName.contains("transparent0_") ?
+                            "flatcoloredblocks:flatcoloredblock_transparent_127" :
+                            legacyFcbName.contains("glowing0_") ?
+                                    "flatcoloredblocks:flatcoloredblock_glowing_255" :
+                                    "flatcoloredblocks:flatcoloredblock";
+
+                    var oldMetadataWorkaround = legacyFcbName
+                            .replace("flatcoloredblocks:flatcoloredblock", "")
+                            .replace("_transparent0_", "")
+                            .replace("_glowing0_", "");
+
+                    var offset = Integer.parseInt(oldMetadataWorkaround) * 16;
+
+                    serializedBlockState = "{Name:'" + name + "',Properties:{shade:'" + (offset + metadata) + "'}}";
+                }
+
+                var blockState = BlockStateSerializationUtils.deserialize(serializedBlockState).result();
+
+                if (blockState.isEmpty()) {
+                    storage.setBlockInformation(x, y, z, IBlockInformation.AIR);
+                    paletteMapping.put(stateId, IBlockInformation.AIR);
+                } else {
+                    var blockInfo = new BlockInformation(blockState.get(), Optional.empty());
+                    storage.setBlockInformation(x, y, z, blockInfo);
+                    paletteMapping.put(stateId, blockInfo);
+
+                    if (!blockState.get().isAir())
+                        totalBlocks++;
+                }
             } else {
-                var name = legacyFcbName.contains("transparent0_") ?
-                        "flatcoloredblocks:flatcoloredblock_transparent_127" :
-                        legacyFcbName.contains("glowing0_") ?
-                                "flatcoloredblocks:flatcoloredblock_glowing_255" :
-                                "flatcoloredblocks:flatcoloredblock";
-
-                var oldMetadataWorkaround = legacyFcbName
-                        .replace("flatcoloredblocks:flatcoloredblock", "")
-                        .replace("_transparent0_", "")
-                        .replace("_glowing0_", "");
-
-                var offset = Integer.parseInt(oldMetadataWorkaround) * 16;
-
-                serializedBlockState = "{Name:'" + name + "',Properties:{shade:'" + (offset + metadata) + "'}}";
+                storage.setBlockInformation(x, y, z, paletteMapping.get(stateId));
             }
 
-            var blockState = BlockStateSerializationUtils.deserialize(serializedBlockState).result();
-
-            if (blockState.isEmpty())
-                storage.setBlockInformation(x, y, z, IBlockInformation.AIR);
-            else
-                storage.setBlockInformation(x, y, z, new BlockInformation(blockState.get(), Optional.empty()));
+            if (primaryId == stateId) {
+                primary = storage.getBlockInformation(x, y, z);
+            }
         }
 
-        ((MutableStatisticsAccessor) mutableStatistics).callRecalculate(storage, false);
+        mutableStatistics.getCountMap().clear();
+        mutableStatistics.setPrimaryState(primary);
+
+        mutableStatistics.setTotalLightLevel(compoundTag.getInt("lv"));
+
+        mutableStatistics.setRequiresRecalculation(true);
+
+        mutableStatistics.setTotalUsedBlockCount(totalBlocks);
+        mutableStatistics.setTotalUsedChecksWeakPowerCount(totalBlocks);
+        mutableStatistics.setTotalLightBlockLevel(0);
 
         return new StoragePayload(storage, mutableStatistics);
     }
 
-    private void deserializeNBT(CompoundTag compoundTag, MutableStatisticsWorkaround mutableStatistics, IStateEntryStorage storage) {
+    private void deserializeNBT(CompoundTag compoundTag, MutableStatisticsAccessor mutableStatistics, IStateEntryStorage storage) {
         deserializeNBTWithPayload(compoundTag, mutableStatistics, storage);
-
-        ((MutableStatisticsAccessor) mutableStatistics).callRecalculate(storage, false);
 
         ((ChiseledBlockEntityAccessor) blockEntity).setStorage(storage);
         ((ExtendedChiseledBlockEntity) blockEntity).setMutableStatistics(mutableStatistics);
@@ -122,7 +135,7 @@ public class LegacyBitStreamBasedStorageHandler implements ILegacyStorageHandler
     @Override
     public StoragePayload readPayloadOffThread(CompoundTag compoundTag) {
         var storage = new SimpleStateEntryStorage();
-        var mutableStatistics = (MutableStatisticsWorkaround) blockEntity.getStatistics();
+        var mutableStatistics = (MutableStatisticsAccessor) blockEntity.getStatistics();
 
         return deserializeNBTWithPayload(compoundTag, mutableStatistics, storage);
     }

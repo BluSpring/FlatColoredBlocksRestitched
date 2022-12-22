@@ -9,7 +9,6 @@
     "ChiseledBlockEntityMixin",
     "LZ4StorageBasedStorageHandlerMixin",
     "MutableStatisticsAccessor",
-    "MutableStatisticsMixin",
     "SimpleStateEntryStorageAccessor",
     "StorageEngineBuilderMixin"
   ],
