@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = ChiseledBlockEntity.class, remap = false)
 public interface ChiseledBlockEntityAccessor {
-    @Accessor(remap = false)
+    @Accessor
     IStateEntryStorage getStorage();
 
     @Accessor(remap = false, value = "isInitialized")

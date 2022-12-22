@@ -67,7 +67,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
 
         var blockEntity = dynamic2;
 
-        var palette = new ArrayList<Dynamic<?>>();
+        /*var palette = new ArrayList<Dynamic<?>>();
         var seen = new HashMap<Integer, Integer>();
 
         var blocks = new int[4096];
@@ -118,7 +118,14 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
             blocks[pos] = palette.size() - 1;
         }
 
-        blockEntity = blockEntity.set("data", CB112To119Converter.convert(palette, blocks, blockEntity.get("lv").asInt(0)));
+        blockEntity = blockEntity.set("data",
+                CB112To119Converter.convert(
+                        palette,
+                        blocks,
+                        blockEntity.get("lv").asInt(0),
+                        palette.get(seen.getOrDefault(blockEntity.get("b").asInt(0), 0))
+                )
+        );*/
 
         blockEntity = blockEntity.set("id", blockEntity.createString("chiselsandbits:chiseled"));
 
@@ -140,16 +147,16 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                 )
         );
 
-        blockEntity = blockEntity.remove("b");
+        /*blockEntity = blockEntity.remove("b");
         blockEntity = blockEntity.remove("X");
         blockEntity = blockEntity.remove("s");
         blockEntity = blockEntity.remove("nc");
-        blockEntity = blockEntity.remove("lv");
+        blockEntity = blockEntity.remove("lv");*/
 
         this.blockEntities.put(l, blockEntity);
 
         // statistics dump
-        if (enableDump) {
+        /*if (enableDump) {
             var file = new File(FabricLoader.getInstance().getGameDir().toFile(), "dump/" + bX + "." + bY + "." + bZ + ".nbt");
             if (!file.getParentFile().exists())
                 file.getParentFile().mkdirs();
@@ -166,7 +173,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
+        }*/
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lcom/mojang/serialization/Dynamic;get(Ljava/lang/String;)Lcom/mojang/serialization/OptionalDynamic;", ordinal = 0, shift = At.Shift.BEFORE), method = "<init>")

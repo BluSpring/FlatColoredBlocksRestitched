@@ -18,6 +18,7 @@ public class ChiseledBlockEntityMixin implements ExtendedChiseledBlockEntity {
     public void setMutableStatistics(MutableStatisticsWorkaround statistics) {
         try {
             var field = ChiseledBlockEntity.class.getDeclaredField("mutableStatistics");
+            field.setAccessible(true);
             field.set(this, statistics);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();

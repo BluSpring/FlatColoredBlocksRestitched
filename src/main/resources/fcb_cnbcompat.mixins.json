@@ -7,8 +7,10 @@
   "mixins": [
     "ChiseledBlockEntityAccessor",
     "ChiseledBlockEntityMixin",
+    "LZ4StorageBasedStorageHandlerMixin",
     "MutableStatisticsAccessor",
     "MutableStatisticsMixin",
+    "SimpleStateEntryStorageAccessor",
     "StorageEngineBuilderMixin"
   ],
   "client": [

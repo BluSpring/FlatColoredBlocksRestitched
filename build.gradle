@@ -25,6 +25,9 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        url 'https://jitpack.io'
+    }
 
     flatDir {
         dir 'libs'
@@ -39,6 +42,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modImplementation("net.devtech:arrp:0.6.4")
+    modImplementation(include("com.github.Chocohead:Fabric-ASM:v2.3"))
 
     // Used by Chisels & Bits 1.19
     implementation (name: 'lz4-pure-java-1.8.0', ext: 'jar')

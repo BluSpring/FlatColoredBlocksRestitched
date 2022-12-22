@@ -25,7 +25,7 @@ import java.util.Map;
 public class CB112To119Converter {
     private static final int size = 16;
 
-    public static Dynamic<?> convert(List<Dynamic<?>> palette, int[] blocks, int lightLevel) {
+    public static Dynamic<?> convert(List<Dynamic<?>> palette, int[] blocks, int lightLevel, Dynamic<?> primaryDynamic) {
         var compound = new CompoundTag();
 
         var paletteList = new ListTag();
@@ -69,22 +69,9 @@ public class CB112To119Converter {
         nbt.put("chiseledData", compound);
 
         var total = 0;
-        CompoundTag primary = null;
 
-        for (int paletteIndex : blocks) {
-            var block = palette.get(paletteIndex);
-
-            if (!block.get("Name").asString("minecraft:air").equals("minecraft:air")) {
-                total++;
-
-                if (primary == null) {
-                    var additionalState = new CompoundTag();
-                    additionalState.putString("state", ((CompoundTag) block.getValue()).getAsString());
-
-                    primary = additionalState;
-                }
-            }
-        }
+        var primary = new CompoundTag();
+        primary.putString("state", ((CompoundTag) primaryDynamic.getValue()).getAsString());
 
         var statistics = new CompoundTag();
         statistics.put("primary_block_information", primary);

@@ -45,7 +45,7 @@ public class LegacyBitStreamBasedStorageHandler implements ILegacyStorageHandler
         deserializeNBT(compoundTag, mutableStatistics, storage);
     }
 
-    private void deserializeNBT(CompoundTag compoundTag, MutableStatisticsWorkaround mutableStatistics, IStateEntryStorage storage) {
+    private StoragePayload deserializeNBTWithPayload(CompoundTag compoundTag, MutableStatisticsWorkaround mutableStatistics, IStateEntryStorage storage) {
         var byteArray = compoundTag.getByteArray("X");
 
         var inflater = new InflaterInputStream(new ByteArrayInputStream(byteArray));
@@ -107,7 +107,37 @@ public class LegacyBitStreamBasedStorageHandler implements ILegacyStorageHandler
 
         ((MutableStatisticsAccessor) mutableStatistics).callRecalculate(storage, false);
 
+        return new StoragePayload(storage, mutableStatistics);
+    }
+
+    private void deserializeNBT(CompoundTag compoundTag, MutableStatisticsWorkaround mutableStatistics, IStateEntryStorage storage) {
+        deserializeNBTWithPayload(compoundTag, mutableStatistics, storage);
+
+        ((MutableStatisticsAccessor) mutableStatistics).callRecalculate(storage, false);
+
         ((ChiseledBlockEntityAccessor) blockEntity).setStorage(storage);
         ((ExtendedChiseledBlockEntity) blockEntity).setMutableStatistics(mutableStatistics);
+    }
+
+    @Override
+    public StoragePayload readPayloadOffThread(CompoundTag compoundTag) {
+        var storage = new SimpleStateEntryStorage();
+        var mutableStatistics = (MutableStatisticsWorkaround) blockEntity.getStatistics();
+
+        return deserializeNBTWithPayload(compoundTag, mutableStatistics, storage);
+    }
+
+    @Override
+    public void syncPayloadOnGameThread(StoragePayload payload) {
+        var blockEntityAccessor = ((ChiseledBlockEntityAccessor) blockEntity);
+
+        blockEntityAccessor.setStorage(payload.storage());
+        ((ExtendedChiseledBlockEntity) blockEntity).setMutableStatistics(payload.mutableStatistics());
+
+        if (!blockEntityAccessor.isInitialized()) {
+            blockEntity.setChanged();
+        }
+
+        blockEntityAccessor.setIsInitialized(true);
     }
 }

@@ -1,6 +1,7 @@
 package mod.flatcoloredblocks.datafixer.chiselsandbits.modern;
 
 import mod.chiselsandbits.storage.IStorageEngine;
+import mod.flatcoloredblocks.datafixer.chiselsandbits.modern.handlers.StoragePayload;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class LegacyVersionedStorageEngine implements IStorageEngine
 {
@@ -37,6 +40,20 @@ public class LegacyVersionedStorageEngine implements IStorageEngine
                 .filter(handler -> handler.matches(nbt))
                 .findFirst()
                 .ifPresent(handler -> handler.deserializeNBT(nbt));
+    }
+
+    public CompletableFuture<Void> deserializeOffThread(final CompoundTag nbt, Executor ioExecutor, Executor gameExecutor) {
+        var handler = handlers.stream()
+                .filter(h -> h.matches(nbt))
+                .findFirst();
+
+        if (handler.isEmpty())
+            return null;
+
+        var storageHandler = handler.get();
+
+        return CompletableFuture.supplyAsync(() -> storageHandler.readPayloadOffThread(nbt), ioExecutor)
+                .thenAcceptAsync(storageHandler::syncPayloadOnGameThread, gameExecutor);
     }
 
     @Override
