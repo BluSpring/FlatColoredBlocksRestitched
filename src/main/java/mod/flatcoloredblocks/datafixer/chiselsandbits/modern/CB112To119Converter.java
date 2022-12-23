@@ -49,11 +49,18 @@ public class CB112To119Converter {
             totalMapping[paletteList.size() - 1] = 0;
         }
 
+        if (airIndex != -1) {
+            var oldZeroIndex = paletteList.get(0);
+            var air = paletteList.get(airIndex);
+            paletteList.set(airIndex, oldZeroIndex);
+            paletteList.set(0, air);
+        }
+
         compound.put("palette", paletteList);
 
         var entryWidth = LongMath.log2(paletteList.size(), RoundingMode.CEILING);
         var requiredSize = (int) (Math.ceil((16 * 16 * 16 * entryWidth) / (float) Byte.SIZE));
-        var bitSet = BitSet.valueOf(new byte[requiredSize]);
+        var bitSet = new BitSet(requiredSize);
 
         var total = 0;
 
@@ -69,16 +76,22 @@ public class CB112To119Converter {
 
             bitSet.clear(bitOffset, bitOffset + entryWidth);
 
+            var paletteIndex = blocks[i];
+            if (paletteIndex == 0 && airIndex != -1)
+                paletteIndex = airIndex;
+            else if (paletteIndex == airIndex)
+                paletteIndex = 0;
+
             for (int j = 0; j < entryWidth; ++j) {
-                var isSet = ((blocks[i] >> j) & 1) != 0;
+                var isSet = ((paletteIndex >> j) & 1) != 0;
 
                 bitSet.set(bitOffset + j, isSet);
             }
 
-            if (blocks[i] != airIndex)
+            if (paletteIndex != 0)
                 total++;
 
-            totalMapping[blocks[i]]++;
+            totalMapping[paletteIndex]++;
         }
 
         for (int x = 0; x < 16; x++) {
@@ -92,14 +105,17 @@ public class CB112To119Converter {
 
                 for (int y = 0; y < 16; y++) {
                     var paletteIndex = blocks[(x << 8) | (y << 4) | z];
+                    if (paletteIndex == 0 && airIndex != -1)
+                        paletteIndex = airIndex;
+                    else if (paletteIndex == airIndex)
+                        paletteIndex = 0;
+
                     var blockType = palette.get(paletteIndex);
                     var blockTypeNbt = (CompoundTag) blockType.getValue();
 
                     if (!blockTypeNbt.getString("Name").equals("minecraft:air")) {
                         noneAir.set(y, true);
                         skylightBlocking.set(y, true);
-
-                        canPropagateSkylightDown = false;
 
                         if (y >= highestBit) {
                             highestBit = (short) y;
@@ -131,15 +147,50 @@ public class CB112To119Converter {
         statistics.putInt("blockCount", total);
         statistics.putInt("blockShouldCheckWeakPowerCount", total);
         statistics.putInt("totalLightLevel", lightLevel);
-        statistics.putInt("totalLightBlockLevel", total * 15);
+        //statistics.putInt("totalLightBlockLevel", total * 15);
 
         var columnStatistics = new CompoundTag();
         var rows = table.rowMap();
         for (int x = 0; x < 16; x++) {
             var columns = new CompoundTag();
-            rows.get(x).forEach((z, data) -> {
-                columns.put(z.toString(), data);
-            });
+            var row = rows.get(x);
+
+            if (row == null) {
+                for (int z = 0; z < 16; z++) {
+                    var tag = new CompoundTag();
+
+                    tag.putBoolean("can_propagate_skylight_down", true);
+                    tag.putShort("highestBit", (short) 0);
+                    tag.putFloat("highestBitFriction", 0.6F);
+                    tag.putBoolean("lowest_bit_can_sustain_grass", true);
+                    tag.putByteArray("none_air_bits", new BitSet(16).toByteArray());
+                    tag.putByteArray("skylight_blocking_bits", new BitSet(16).toByteArray());
+
+                    columns.put(Integer.toString(z), tag);
+                }
+
+                columnStatistics.put(Integer.toString(x), columns);
+                continue;
+            }
+
+            for (int z = 0; z < 16; z++) {
+                var column = row.get(z);
+
+                if (column == null) {
+                    var tag = new CompoundTag();
+
+                    tag.putBoolean("can_propagate_skylight_down", true);
+                    tag.putShort("highestBit", (short) 0);
+                    tag.putFloat("highestBitFriction", 0.6F);
+                    tag.putBoolean("lowest_bit_can_sustain_grass", true);
+                    tag.putByteArray("none_air_bits", new BitSet(16).toByteArray());
+                    tag.putByteArray("skylight_blocking_bits", new BitSet(16).toByteArray());
+
+                    columns.put(Integer.toString(z), tag);
+                } else {
+                    columns.put(Integer.toString(z), column);
+                }
+            }
 
             columnStatistics.put(Integer.toString(x), columns);
         }
@@ -148,7 +199,7 @@ public class CB112To119Converter {
 
         var totalData = new ListTag();
         for (int i = 0; i < totalMapping.length; i++) {
-            if (i == airIndex)
+            if (i == 0)
                 continue;
 
             var blockInfo = paletteList.get(i);
@@ -163,13 +214,13 @@ public class CB112To119Converter {
         statistics.put("blockStates", totalData);
 
         // All Collision
-        var allCollisions = new BitSet();
+        var allCollisions = new BitSet(16);
 
         // Collidable Only (not air and no fluid)
-        var collidableOnlyCollisions = new BitSet();
+        var collidableOnlyCollisions = new BitSet(16);
 
         // None Air Collision (not air)
-        var noneAirCollisions = new BitSet();
+        var noneAirCollisions = new BitSet(16);
 
         for (int i = 0; i < blocks.length; i++) {
             var x = (i >> 8) & 15;
@@ -177,23 +228,25 @@ public class CB112To119Converter {
             var z = i & 15;
 
             var paletteIndex = blocks[i];
-            var blockType = palette.get(paletteIndex);
-            var blockTypeNbt = (CompoundTag) blockType.getValue();
+            if (paletteIndex == 0 && airIndex != -1)
+                paletteIndex = airIndex;
+            else if (paletteIndex == airIndex)
+                paletteIndex = 0;
 
             var pos = (x * (16 * 16)) + (y * 16) + z;
 
             allCollisions.set(pos, true);
 
-            if (!blockTypeNbt.getString("Name").equals("minecraft:air")) {
+            if (paletteIndex != 0) {
                 collidableOnlyCollisions.set(pos, true);
                 noneAirCollisions.set(pos, true);
             }
         }
 
         var collisions = new CompoundTag();
-        collisions.putByteArray("ALL", allCollisions.toByteArray());
-        collisions.putByteArray("COLLIDEABLE_ONLY", collidableOnlyCollisions.toByteArray());
-        collisions.putByteArray("NONE_AIR", noneAirCollisions.toByteArray());
+        collisions.putLongArray("ALL", allCollisions.toLongArray());
+        collisions.putLongArray("COLLIDEABLE_ONLY", collidableOnlyCollisions.toLongArray());
+        collisions.putLongArray("NONE_AIR", noneAirCollisions.toLongArray());
 
         statistics.put("collision_data", collisions);
 

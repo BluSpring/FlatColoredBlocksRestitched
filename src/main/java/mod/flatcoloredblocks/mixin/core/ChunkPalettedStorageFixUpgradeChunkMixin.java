@@ -48,6 +48,9 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
         if (!FabricLoader.getInstance().isModLoaded("chiselsandbits"))
             return;
 
+        if (FabricLoader.getInstance().isModLoaded("bitsandchisels"))
+            return;
+
         this.level.get("TileEntities").asStreamOpt().result().ifPresent((stream) -> {
             stream.forEach((dynamic2) -> {
                 try {
@@ -147,6 +150,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                 )
         );
 
+        blockEntity = blockEntity.set("keepPacked", blockEntity.createBoolean(false));
         blockEntity = blockEntity.set("version", blockEntity.createInt(0));
 
         blockEntity = blockEntity.remove("b");
