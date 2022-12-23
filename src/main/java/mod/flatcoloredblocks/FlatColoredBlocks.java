@@ -4,8 +4,6 @@ import mod.flatcoloredblocks.block.BlockFlatColored;
 import mod.flatcoloredblocks.block.BlockHSVConfiguration;
 import mod.flatcoloredblocks.block.EnumFlatBlockType;
 import mod.flatcoloredblocks.block.ItemBlockFlatColored;
-import mod.flatcoloredblocks.block.cnbconvert.LegacyChiseledBlock;
-import mod.flatcoloredblocks.block.cnbconvert.LegacyChiseledBlockEntity;
 import mod.flatcoloredblocks.config.ModConfig;
 import mod.flatcoloredblocks.craftingitem.ContainerColoredBlockCrafter;
 import mod.flatcoloredblocks.craftingitem.ItemColoredBlockCrafter;
@@ -116,29 +114,12 @@ public class FlatColoredBlocks implements ModInitializer
 		glowing = new BlockHSVConfiguration( EnumFlatBlockType.GLOWING, config );
 	}
 
-	public static Block LEGACY_CHISELED_BLOCK = null;
-	public static BlockEntityType<LegacyChiseledBlockEntity> LEGACY_CHISELED_BLOCK_ENTITY = null;
-
 	public static class RegistryEvents
 	{
 		public static void onBlocksRegistry(Registry<Block> registry)
 		{
 			Log.debug( "registering blocks : " + registry.key().registry().toString() );
 			FlatColoredBlocks.instance.blocks(registry);
-
-			if (FabricLoader.getInstance().isModLoaded("chiselsandbits")) {
-				LEGACY_CHISELED_BLOCK = Registry.register(
-						Registry.BLOCK,
-						new ResourceLocation("flatcoloredblocks", "legacy_chiseled_block"),
-						new LegacyChiseledBlock(FabricBlockSettings.copy(Blocks.STONE))
-				);
-
-				LEGACY_CHISELED_BLOCK_ENTITY = Registry.register(
-						Registry.BLOCK_ENTITY_TYPE,
-						new ResourceLocation("flatcoloredblocks", "legacy_chiseled_block_entity"),
-						FabricBlockEntityTypeBuilder.create(LegacyChiseledBlockEntity::new, LEGACY_CHISELED_BLOCK).build()
-				);
-			}
 		}
 
 		public static void onItemsRegistry(Registry<Item> registry)
