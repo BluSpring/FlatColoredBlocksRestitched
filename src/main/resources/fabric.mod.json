@@ -21,8 +21,7 @@
     ]
   },
   "mixins": [
-    "flatcoloredblocks.mixins.json",
-    "fcb_cnbcompat.mixins.json"
+    "flatcoloredblocks.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.14.8",
@@ -31,6 +30,7 @@
     "advanced_runtime_resource_pack": "*"
   },
   "suggests": {
-    "bitsandchisels": "*"
+    "bitsandchisels": "*",
+    "chiselsandbits": "*"
   }
 }

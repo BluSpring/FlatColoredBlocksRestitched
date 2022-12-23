@@ -33,7 +33,7 @@ import java.util.zip.InflaterInputStream;
 
 @Mixin(targets = "net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix$UpgradeChunk")
 public class ChunkPalettedStorageFixUpgradeChunkMixin {
-    private static final boolean enableDump = true;
+    private static final boolean enableDump = false;
 
     @Shadow @Final private Int2ObjectMap<Dynamic<?>> blockEntities;
 
@@ -147,6 +147,8 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
                 )
         );
 
+        blockEntity = blockEntity.set("version", blockEntity.createInt(0));
+
         blockEntity = blockEntity.remove("b");
         blockEntity = blockEntity.remove("X");
         blockEntity = blockEntity.remove("s");
@@ -156,7 +158,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
         this.blockEntities.put(l, blockEntity);
 
         // statistics dump
-        /*if (enableDump) {
+        if (enableDump) {
             var file = new File(FabricLoader.getInstance().getGameDir().toFile(), "dump/" + bX + "." + bY + "." + bZ + ".nbt");
             if (!file.getParentFile().exists())
                 file.getParentFile().mkdirs();
@@ -173,7 +175,7 @@ public class ChunkPalettedStorageFixUpgradeChunkMixin {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }*/
+        }
     }
 
     @Inject(at = @At(value = "INVOKE", target = "Lcom/mojang/serialization/Dynamic;get(Ljava/lang/String;)Lcom/mojang/serialization/OptionalDynamic;", ordinal = 0, shift = At.Shift.BEFORE), method = "<init>")

@@ -1,10 +1,13 @@
 package mod.flatcoloredblocks.datafixer.chiselsandbits.modern;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.google.common.math.LongMath;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.DynamicOps;
 import mod.chiselsandbits.block.entities.storage.SimpleStateEntryStorage;
 import mod.chiselsandbits.utils.ChunkSectionUtils;
+import mod.chiselsandbits.utils.LZ4DataCompressionUtils;
 import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
 import net.minecraft.data.BuiltinRegistries;
@@ -29,13 +32,21 @@ public class CB112To119Converter {
         var compound = new CompoundTag();
 
         var paletteList = new ListTag();
+        var airIndex = -1;
+
+        var totalMapping = new int[palette.size()];
+
         for (Dynamic<?> id : palette) {
             var additionalStateCompound = new CompoundTag();
             var stateCompound = (CompoundTag) id.getValue();
 
+            if (stateCompound.getString("Name").equals("minecraft:air"))
+                airIndex = paletteList.size();
+
             additionalStateCompound.putString("state", stateCompound.getAsString());
 
             paletteList.add(additionalStateCompound);
+            totalMapping[paletteList.size() - 1] = 0;
         }
 
         compound.put("palette", paletteList);
@@ -43,6 +54,10 @@ public class CB112To119Converter {
         var entryWidth = LongMath.log2(paletteList.size(), RoundingMode.CEILING);
         var requiredSize = (int) (Math.ceil((16 * 16 * 16 * entryWidth) / (float) Byte.SIZE));
         var bitSet = BitSet.valueOf(new byte[requiredSize]);
+
+        var total = 0;
+
+        Table<Integer, Integer, CompoundTag> table = HashBasedTable.create();
 
         for (int i = 0; i < blocks.length; i++) {
             var x = (i >> 8) & 15;
@@ -59,29 +74,135 @@ public class CB112To119Converter {
 
                 bitSet.set(bitOffset + j, isSet);
             }
+
+            if (blocks[i] != airIndex)
+                total++;
+
+            totalMapping[blocks[i]]++;
+        }
+
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                var skylightBlocking = new BitSet(16);
+                var noneAir = new BitSet(16);
+                short highestBit = 0;
+                float highestBitFriction = 0.6F;
+                boolean canPropagateSkylightDown = true;
+                boolean lowestBitCanSustainGrass = false;
+
+                for (int y = 0; y < 16; y++) {
+                    var paletteIndex = blocks[(x << 8) | (y << 4) | z];
+                    var blockType = palette.get(paletteIndex);
+                    var blockTypeNbt = (CompoundTag) blockType.getValue();
+
+                    if (!blockTypeNbt.getString("Name").equals("minecraft:air")) {
+                        noneAir.set(y, true);
+                        skylightBlocking.set(y, true);
+
+                        canPropagateSkylightDown = false;
+
+                        if (y >= highestBit) {
+                            highestBit = (short) y;
+                        }
+                    }
+                }
+
+                var tag = new CompoundTag();
+
+                tag.putBoolean("can_propagate_skylight_down", canPropagateSkylightDown);
+                tag.putShort("highestBit", highestBit);
+                tag.putFloat("highestBitFriction", highestBitFriction);
+                tag.putBoolean("lowest_bit_can_sustain_grass", lowestBitCanSustainGrass);
+                tag.putByteArray("none_air_bits", noneAir.toByteArray());
+                tag.putByteArray("skylight_blocking_bits", skylightBlocking.toByteArray());
+
+                table.put(x, z, tag);
+            }
         }
 
         compound.putByteArray("data", bitSet.toByteArray());
 
         // Now we recreate the data
-        var nbt = new CompoundTag();
-
-        nbt.put("chiseledData", compound);
-
-        var total = 0;
-
         var primary = new CompoundTag();
         primary.putString("state", ((CompoundTag) primaryDynamic.getValue()).getAsString());
 
         var statistics = new CompoundTag();
         statistics.put("primary_block_information", primary);
         statistics.putInt("blockCount", total);
-        statistics.putInt("blockShouldCheckWeakPowerCount", 0);
+        statistics.putInt("blockShouldCheckWeakPowerCount", total);
         statistics.putInt("totalLightLevel", lightLevel);
+        statistics.putInt("totalLightBlockLevel", total * 15);
 
-        nbt.put("statistics", statistics);
+        var columnStatistics = new CompoundTag();
+        var rows = table.rowMap();
+        for (int x = 0; x < 16; x++) {
+            var columns = new CompoundTag();
+            rows.get(x).forEach((z, data) -> {
+                columns.put(z.toString(), data);
+            });
 
-        return new Dynamic<>(NbtOps.INSTANCE, nbt);
+            columnStatistics.put(Integer.toString(x), columns);
+        }
+
+        statistics.put("column_statistics", columnStatistics);
+
+        var totalData = new ListTag();
+        for (int i = 0; i < totalMapping.length; i++) {
+            if (i == airIndex)
+                continue;
+
+            var blockInfo = paletteList.get(i);
+
+            var totalCompound = new CompoundTag();
+            totalCompound.put("block_information", blockInfo);
+            totalCompound.putInt("count", totalMapping[i]);
+
+            totalData.add(totalCompound);
+        }
+
+        statistics.put("blockStates", totalData);
+
+        // All Collision
+        var allCollisions = new BitSet();
+
+        // Collidable Only (not air and no fluid)
+        var collidableOnlyCollisions = new BitSet();
+
+        // None Air Collision (not air)
+        var noneAirCollisions = new BitSet();
+
+        for (int i = 0; i < blocks.length; i++) {
+            var x = (i >> 8) & 15;
+            var y = (i >> 4) & 15;
+            var z = i & 15;
+
+            var paletteIndex = blocks[i];
+            var blockType = palette.get(paletteIndex);
+            var blockTypeNbt = (CompoundTag) blockType.getValue();
+
+            var pos = (x * (16 * 16)) + (y * 16) + z;
+
+            allCollisions.set(pos, true);
+
+            if (!blockTypeNbt.getString("Name").equals("minecraft:air")) {
+                collidableOnlyCollisions.set(pos, true);
+                noneAirCollisions.set(pos, true);
+            }
+        }
+
+        var collisions = new CompoundTag();
+        collisions.putByteArray("ALL", allCollisions.toByteArray());
+        collisions.putByteArray("COLLIDEABLE_ONLY", collidableOnlyCollisions.toByteArray());
+        collisions.putByteArray("NONE_AIR", noneAirCollisions.toByteArray());
+
+        statistics.put("collision_data", collisions);
+
+        var compressed = LZ4DataCompressionUtils.compress((compoundTag) -> {
+            compoundTag.put("chiseledData", compound);
+            compoundTag.put("statistics", statistics);
+        });
+
+        return new Dynamic<>(NbtOps.INSTANCE, compressed);
     }
 
     private static Vec3i calculatePosition(int index) {
