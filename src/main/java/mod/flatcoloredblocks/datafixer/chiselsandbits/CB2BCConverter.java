@@ -49,6 +49,25 @@ public class CB2BCConverter {
         return bitsFormat;
     }
 
+    public static ByteBuffer inflate(ByteBuffer buffer) {
+        var inflater = new InflaterInputStream(new ByteArrayInputStream(buffer.array()));
+        var inflatedBuffer = ByteBuffer.allocate(3145728);
+
+        int usedBytes = 0;
+        int rv = 0;
+
+        do {
+            usedBytes += rv;
+            try {
+                rv = inflater.read(inflatedBuffer.array(), usedBytes, inflatedBuffer.limit() - usedBytes);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } while (rv > 0);
+
+        return inflatedBuffer;
+    }
+
     public static CompactBitsFormat loadCompact(FriendlyByteBuf byteBuf) {
         var types = byteBuf.readVarInt();
         var palette = new int[types];
