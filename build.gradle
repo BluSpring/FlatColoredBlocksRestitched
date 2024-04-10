@@ -15,7 +15,7 @@ loom {
 
 repositories {
     maven {
-        url = uri("https://storage.googleapis.com/devan-maven/")
+        url = uri("https://ueaj.dev/maven")
         // for 0.4.2 and older
         // url uri("https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master/")
     }
